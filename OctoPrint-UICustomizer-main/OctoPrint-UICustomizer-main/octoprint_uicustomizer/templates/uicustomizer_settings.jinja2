@@ -1,0 +1,192 @@
+<form class="form-horizontal">
+    <ul class="nav nav-pills">
+        <li class="active">
+            <a data-toggle="tab" href="#settings_uicustomizer_general">{{ _('General') }}</a>
+        </li>
+        <li>
+            <a data-toggle="tab" href="#settings_uicustomizer_themes">{{ _('Themes') }}</a>
+        </li>
+        <li>
+            <a data-toggle="tab" href="#settings_uicustomizer_layout">{{ _('Layout') }}</a>
+        </li>
+        <li>
+            <a data-toggle="tab" href="#settings_uicustomizer_tabs">{{ _('Main tabs') }}</a>
+        </li>
+        <li>
+            <a data-toggle="tab" href="#settings_uicustomizer_topicons">{{ _('Top icons') }}</a>
+        </li>
+        <li>
+            <a data-toggle="tab" href="#settings_uicustomizer_adv">{{ _('Advanced') }}</a>
+        </li>
+        <li class="pull-right" id="UICRealPrevCheck" title="Switching this on will minimize the settingsdialog and preview any changes made to UI Customizer settings directly in the UI"><a href="#"><i class="far fa-square"></i> {{ _('Preview') }}</a></li>
+    </ul>
+    <div class="tab-content">
+        <div class="tab-pane active" id="settings_uicustomizer_general">
+            <h4>{{ _('General options') }}</h4>
+            <fieldset>
+                <div class="row-fluid">
+                    <div class="span6">
+                        <div class="controls">
+                            <label class="checkbox" title="Enables the improved responsive mode including settings for mobile/tablets"><input data-bind="checked: settings.plugins.uicustomizer.responsiveMode" data-settingtype="responsiveMode" type="checkbox"> {{ _('Improve mobile/responsive') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Should the top menubar stay fixed when scrolling or not"><input data-bind="checked: settings.plugins.uicustomizer.fixedHeader" data-settingtype="fixedHeader" type="checkbox"> {{ _('Fixed header/topbar') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Should the bottom bar stay fixed when scrolling or not"><input data-bind="checked: settings.plugins.uicustomizer.fixedFooter" data-settingtype="fixedFooter" type="checkbox"> {{ _('Fixed footer/bottom bar') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Should the main dropdown menu be a single compact menu, only used when using responsive mode"><input data-bind="checked: settings.plugins.uicustomizer.compactMenu" data-settingtype="compactMenu" type="checkbox"> {{ _('Compact menu') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Maximize the main gcode viewer to take up as much space as possible"><input data-bind="checked: settings.plugins.uicustomizer.gcodeFullWidth" data-settingtype="gcodeFullWidth" data-previewtab="gcode_link" type="checkbox"> {{ _('Gcode full-size') }}</label>
+                        </div>
+                         <div class="controls">
+                            <label class="checkbox" title="Makes the files and terminal sections resizeable"><input data-bind="checked: settings.plugins.uicustomizer.filesFullHeight" data-settingtype="filesFullHeight" type="checkbox"> {{ _('Resizable Files+Terminal') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Save accordion/widget open/close state"><input data-bind="checked: settings.plugins.uicustomizer.saveAccordions" data-settingtype="saveAccordions" type="checkbox"> {{ _('Save accordion open/close state') }}</label>
+                        </div>
+                    </div>
+                    <div class="span6">
+                        <div class="controls">
+                            <label class="checkbox" title="Should the entire screen width be used or not"><input data-bind="checked: settings.plugins.uicustomizer.fluidLayout" data-settingtype="fluidLayout" type="checkbox"> {{ _('Fluid/full width layout') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Hide temperature background graphics"><input data-bind="checked: settings.plugins.uicustomizer.hideGraphBackground" data-settingtype="hideGraphBackground" data-previewtab="temp_link" type="checkbox"> {{ _('Hide temp. graph background') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Hide the webcamera on the Control tab"><input data-bind="checked: settings.plugins.uicustomizer.hideMainCam" data-settingtype="hideMainCam" data-previewtab="control_link"  type="checkbox"> {{ _('Hide webcamera on Control tab') }}</label>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Will add an zoom/fullscreen icon to the webcam live feed that will show the webcam video feed in a floating resizeable overlay or fullscreen view"><input data-bind="checked: settings.plugins.uicustomizer.addWebCamZoom" data-settingtype="addWebCamZoom" type="checkbox"> {{ _('Float/Fullscreen webcam') }}</label>
+                            <div data-bind="visible: settings.plugins.uicustomizer.addWebCamZoom">
+                                <select id="UICwebcamzoomtype" data-bind="value: settings.plugins.uicustomizer.webcamzoomtype">
+                                    <option value="float">Floating overlay webcam</option>
+                                    <option value="full">Fullscreen webcam</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="controls">
+                            <label class="checkbox" title="Compress the temperature controls inputs"><input data-bind="checked: settings.plugins.uicustomizer.compressTempControls" data-settingtype="compressTempControls" data-previewtab="temp_link" type="checkbox"> {{ _('Compress temp. controls') }}</label>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+         <div class="tab-pane" id="settings_uicustomizer_themes">
+            <h4>{{ _('Themes') }}</h4>
+            <div id="settings_uicustomizer_themesContent"></div>
+        </div>
+        <div class="tab-pane" id="settings_uicustomizer_layout">
+            <div class="help-block pull-right">
+                {{ _('Total width cannot exceed 12') }}
+            </div>
+            <h4>{{ _('Layout') }}</h4>
+            <fieldset>
+                <div class="row-fluid" id="UICSortCols">
+                    <div class="span4">
+                        <h5 class="text-center">{{ _('Left column') }}</h5>{{ _('Width:') }}
+                        <div class="pull-right">
+                            <input class="uiccolwidth" data-bind="value: settings.plugins.uicustomizer.widths()[0]" max="10" min="0" type="range"> <span></span>
+                        </div>
+                        <ul class="nav nav-stacked"></ul>
+                    </div>
+                    <div class="span4">
+                        <h5 class="text-center">{{ _('Center column') }}</h5>{{ _('Width:') }}
+                        <div class="pull-right">
+                            <input class="uiccolwidth" data-bind="value: settings.plugins.uicustomizer.widths()[1]" max="10" min="0" type="range"> <span></span>
+                        </div>
+                        <ul class="nav nav-stacked"></ul>
+                    </div>
+                    <div class="span4">
+                        <h5 class="text-center">{{ _('Right column') }}</h5>{{ _('Width:') }}
+                        <div class="pull-right">
+                            <input class="uiccolwidth" data-bind="value: settings.plugins.uicustomizer.widths()[2]" max="10" min="0" type="range"> <span></span>
+                        </div>
+                        <ul class="nav nav-stacked"></ul>
+                    </div>
+                </div>
+            </fieldset>
+            <div class="help-block">Press and drag to arrange a item/widget between columns. Click <i class="fas fa-eye"></i> to hide/show item/widget</div>
+        </div>
+        <div class="tab-pane" id="settings_uicustomizer_tabs">
+            <h4>{{ _('Main tabs') }}</h4>
+            <fieldset>
+                <legend><label class="checkbox" title="Should we customize the main/center tabs"><input data-bind="checked: settings.plugins.uicustomizer.mainTabsCustomize" id="UICMainTabCustomizerToggle" type="checkbox"> {{ _('Customize tabs') }}</label></legend>
+                <div class="alert UICthemeifyAlert">
+                    <strong>Themeify plugin detected</strong>
+                    <br/>
+                    <small>Having both Themeify and UI Customizer changing tab icons can cause problems. You should uncheck <a href="javascript:$('#settings_plugin_themeify_link a').trigger('click');">"Enable Tab-icons" in Themeify</a> or "Customize tabs" in UI Customizer.</small>
+                </div>
+                <div id="settings_uicustomizer_tabs_look"></div>
+            </fieldset>
+            <fieldset>
+                <legend>{{ _('Icons size') }}</legend>
+                <div class="control-group">
+                    <label class="control-label">Size</label>
+                    <div class="controls">
+                        <select id="UICMainTabsIconSize" data-bind="value: settings.plugins.uicustomizer.mainTabsIconSize">
+                            <option value="fa-xs">Xtra small</option>
+                            <option value="fa-sm">Small</option>
+                            <option value="">Normal(1:1)</option>
+                            <option value="fa-lg">x1.3</option>
+                            <option value="fa-2x">x2</option>
+                            <option value="fa-3x">x3</option>
+                            <option value="fa-4x">x4</option>
+                            <option value="fa-5x">x5</option>
+                            <option value="fa-6x">x6</option>
+                            <option value="fa-7x">x7</option>
+                            <option value="fa-8x">x8</option>
+                            <option value="fa-9x">x9</option>
+                            <option value="fa-10x">x10</option>
+                        </select>
+                        <div class="thumbnail pull-right"><i class="fab fa-octopus-deploy" data-bind="class: settings.plugins.uicustomizer.mainTabsIconSize"></i></div>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="tab-pane" id="settings_uicustomizer_topicons">
+            <h4>{{ _('Top icons') }}</h4>
+            <div class="row-fluid">
+                <div class="span6">
+                    <div class="controls">
+                        <label class="checkbox" title="Will add icons and shrink the temperature display on the Navbar temperature plugin"><input data-bind="checked: settings.plugins.uicustomizer.navbarplugintempfix" data-settingtype="navbarplugintempfix" type="checkbox"> {{ _('Compact "Navbar Temperature Plugin"') }}</label>
+                    </div>
+                </div>
+                <div class="span6">
+                    <div class="controls">
+                        <label class="checkbox" title="Will horizontal center the extra plugins, top icons in the topbar"><input data-bind="checked: settings.plugins.uicustomizer.centerTopIcons" data-settingtype="centerTopIcons" type="checkbox"> {{ _('Center topbar icons') }}</label>
+                    </div>
+                </div>
+            </div>
+            <fieldset>
+                <legend>{{ _('Icon order') }}</legend>
+                <div id="settings_uicustomizer_topicons_container" class="accordion"></div>
+            </fieldset>
+        </div>
+        <div class="tab-pane" id="settings_uicustomizer_adv">
+            <h4>{{ _('Advanced') }}</h4>
+            <div class="row-fluid">
+                <div class="span6">
+                    <div class="controls">
+                        <label class="checkbox" title="Disables the terminal update when the tab is in the background - gives a small perfomance boost"><input data-bind="checked: settings.plugins.uicustomizer.disableTermInactive" type="checkbox"> {{ _('Disable terminal when hidden') }}</label>
+                    </div>
+                </div>
+            </div>
+            <br>
+            <label>Custom CSS</label>
+            <textarea class="UICCustomCSS block monospace" data-bind="value: settings.plugins.uicustomizer.customCSS"></textarea>
+            <h5>{{ _('Import/Export settings') }}</h5>
+            <a href="./plugin/uicustomizer/download?settings" class="btn btn-small"><i class="fas fa-download"></i> Export settings</a>
+            <label class="btn btn-small"><i class="fas fa-upload"></i> Import settings<input type="file" id="UICUploadSettings" class="hide" accept=".json"></label>
+            <div class="alert UICHide" id="UISettingsImportAlert"></div>
+        </div>
+    </div>
+    <div class="UICBottomBar">
+        <div class="btn-group">
+            <a title="Support me using PayPal" href="https://www.paypal.com/donate/?business=2STH3SD3KXGNQ&item_name=UI+Customizer" target="_blank" class="btn btn-mini btn-info" id="UICDonate"><i class="fab fa-paypal UICPadRight"></i>PayPal donation</a>
+            <a title="Support me using GitHub sponsorship" href="https://github.com/sponsors/LazeMSS" target="_blank" class="btn btn-mini btn-info" id="UICDonate"><i class="far fa-heart UICPadRight"></i>GitHub sponsor</a>
+        </div>
+        <a id="UICReportBug" class="btn btn-mini btn-success"><i class="fas fa-bug UICPadRight"></i>Report a bug</a></div>
+</form>
