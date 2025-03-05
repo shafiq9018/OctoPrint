@@ -1,16 +1,10 @@
-/* TODO: Have your plugin's CSS files generated to here. */
-#gcode_scanner_tab {
-    padding: 15px;
+#gcode_file_select {
+    display: inline-block !important;
+    width: auto !important;
+    min-width: 250px;
 }
-#gcode_scanner_tab h2 {
-    font-size: 18px;
-}
-#gcode_scanner_tab button {
-    margin-top: 10px;
-}
-#gcode_scanner_tab .gcode-scanner {
-    margin-top: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+
+#scan_gcode_button {
+    display: inline-block !important;
+    margin-left: 10px;
 }
