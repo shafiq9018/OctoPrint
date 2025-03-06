@@ -33,7 +33,7 @@ $(function() {
         
             console.log("Dropdown updated successfully.");
         };
-        
+
         // Function to get filesViewModel safely
         function getFilesViewModel() {
             var filesViewModel = ko.dataFor(document.querySelector("#files_wrapper"));
@@ -84,23 +84,25 @@ $(function() {
             return entry;
         }
 
-        // 🔹 FIX: `getGcodePathAndName` should not be inside another function.
-        function getGcodePathAndName(entry, gcodeUrl) {
-            if (entry && entry.hasOwnProperty("children")) {
-                for (var child in entry.children) {
-                    var value = getGcodePathAndName(entry.children[child], gcodeUrl);
-                    if (typeof value !== "undefined") {
-                        return value; // 🔹 FIX: Missing return statement inside `if`.
-                    }
-                }
-            } else if (entry && entry.hasOwnProperty("name") && entry.refs && entry.refs.hasOwnProperty("download") && entry["refs"]["download"] === gcodeUrl) {
-                return (typeof self.files.currentPath !== "undefined" ? "/" : "") + 
-                    (entry.hasOwnProperty("path") ? entry["path"] : entry["name"]);
-            }
-        }
 
         // Populate dropdown on page load
         self.populateDropdown();
+    }
+    
+    // I removed this function from the `GcodeScannerViewModel` because it is not used.
+    // Source https://github.com/ieatacid/OctoPrint-GcodeEditor/blob/master/octoprint_GcodeEditor/static/js/GcodeEditor.js
+    function getGcodePathAndName(entry, gcodeUrl) {
+        if (entry && entry.hasOwnProperty("children")) {
+            for (var child in entry.children) {
+                var value = getGcodePathAndName(entry.children[child], gcodeUrl);
+                if (typeof value !== "undefined") {
+                    return value; // 🔹 FIX: Missing return statement inside `if`.
+                }
+            }
+        } else if (entry && entry.hasOwnProperty("name") && entry.refs && entry.refs.hasOwnProperty("download") && entry["refs"]["download"] === gcodeUrl) {
+            return (typeof self.files.currentPath !== "undefined" ? "/" : "") + 
+                (entry.hasOwnProperty("path") ? entry["path"] : entry["name"]);
+        }
     }
 
     OCTOPRINT_VIEWMODELS.push({
