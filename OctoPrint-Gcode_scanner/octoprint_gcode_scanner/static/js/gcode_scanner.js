@@ -62,33 +62,28 @@ $(function() {
         setTimeout(self.populateDropdown, 2000); // Give time for OctoPrint to load files
         
 
-        // 🔹 FIX: `getRootFilePath` should not be nested inside another function.
-        function getRootFilePath() {
-            var entry = self.files.listHelper.allItems[0];
-
-            if (entry && !entry.hasOwnProperty("parent")) {
-                var root = { children: {} };
-
-                // 🔹 FIX: Added `{}` to properly format the loop.
-                for (var index in self.files.listHelper.allItems) {
-                    root.children[index] = self.files.listHelper.allItems[index];
-                }
-
-                return root;
-            }
-
-            while (entry && entry.hasOwnProperty("parent") && typeof entry["parent"] !== "undefined") {
-                entry = entry["parent"];
-            }
-
-            return entry;
-        }
-
-
         // Populate dropdown on page load
         self.populateDropdown();
     }
     
+    // Moved function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
+    function getRootFilePath() {
+        var entry = self.File.listHelper.allItems[0];
+
+        if (entry && !entry.hasOwnProperty("parent")) {
+            var root = { children: {} };
+            // 🔹 FIX: Added `{}` to properly format the loop.
+            for (var index in self.files.listHelper.allItems) {
+                root.children[index] = self.files.listHelper.allItems[index];
+            }
+            return root;
+        }
+        while (entry && entry.hasOwnProperty("parent") && typeof entry["parent"] !== "undefined") {
+            entry = entry["parent"];
+        }
+        return entry;
+    }
+
     // I removed this function from the `GcodeScannerViewModel` because it is not used.
     // Source https://github.com/ieatacid/OctoPrint-GcodeEditor/blob/master/octoprint_GcodeEditor/static/js/GcodeEditor.js
     function getGcodePathAndName(entry, gcodeUrl) {
