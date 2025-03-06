@@ -13,6 +13,8 @@ $(function() {
             dropdown.append('<option value="">-- Choose a file --</option>');
 
             // 🔹 FIX: `filesViewModel` should be a function call.
+            // I have the function below but I am keeping this simple to troubleshoot.
+            // filesViewModel is a Knockout.js ViewModel for OctoPrint to handle G-code files in our UI
             var filesViewModel = ko.dataFor(document.querySelector("#files_wrapper"));
             if (!filesViewModel) {
                 console.log("filesViewModel not found.");
@@ -34,42 +36,44 @@ $(function() {
             console.log("Dropdown updated successfully.");
         };
 
-        // Function to get filesViewModel safely
-        function getFilesViewModel() {
-            var filesViewModel = ko.dataFor(document.querySelector("#files_wrapper"));
-            if (!filesViewModel) {
-                console.log("❌ filesViewModel not found.");
-                return null;
-            }
-            return filesViewModel;
-        }
 
         // Function to get the list of G-code files
-        function getGcodeFiles() {
-            var filesViewModel = getFilesViewModel();
-            if (!filesViewModel) return [];
-
-            var fileList = filesViewModel.allItems();
-            if (!fileList || fileList.length === 0) {
-                console.log("⚠ No G-code files found.");
-                return [];
-            }
-
-            return fileList;
-        }
-
+       
         // Ensure it runs when the page loads
         setTimeout(self.populateDropdown, 2000); // Give time for OctoPrint to load files
-        
-
         // Populate dropdown on page load
         self.populateDropdown();
     }
-    
+
+    // FIX: Moved the function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
+    // Function to get filesViewModel
+    function getFilesViewModel() {
+        var filesViewModel = ko.dataFor(document.querySelector("#files_wrapper"));
+        if (!filesViewModel) {
+            console.log("filesViewModel not found.");
+            return null;
+        }
+        return filesViewModel;
+    }
+
     // Moved function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
+    function getGcodeFiles() {
+        var filesViewModel = getFilesViewModel();
+        if (!filesViewModel) return [];
+
+        var fileList = filesViewModel.allItems();
+        if (!fileList || fileList.length === 0) {
+            console.log("No G-code files found.");
+            return [];
+        }
+        return fileList;
+    }
+
+
+    // Moved function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
+    // Source https://github.com/ieatacid/OctoPrint-GcodeEditor/blob/master/octoprint_GcodeEditor/static/js/GcodeEditor.js
     function getRootFilePath() {
         var entry = self.File.listHelper.allItems[0];
-
         if (entry && !entry.hasOwnProperty("parent")) {
             var root = { children: {} };
             // 🔹 FIX: Added `{}` to properly format the loop.
