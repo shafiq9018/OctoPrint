@@ -3,6 +3,7 @@
     <p>Select a file and scan for unsafe G-code commands.</p>
 
     <!-- Wrapper for alignment -->
+    <!-- The scan button is not lining up -->
     <div style="display: flex; align-items: center;">
         <label for="gcode_file_select" style="margin-right: 10px;">Select a file:</label>
         <select id="gcode_file_select" class="form-control" style="width: 250px; margin-right: 10px;">
@@ -11,9 +12,9 @@
         <button id="scan_gcode_button" class="btn btn-primary">Scan G-code</button>
     </div>
 
-    <!-- 🔍 Scan Results Section -->
-    <div id="scanResults" style="margin-top: 20px;">
-        <h4>Scan Results:</h4>
-        <ul id="scanResultsList" class="list-group"></ul> <!-- 🛠 Results displayed here -->
+    <div id="scan_results" style="display: none;">
+        <h4>Scan Results</h4>
+        <ul id="scan_results_list"></ul>
     </div>
+
 </div>
