@@ -49,6 +49,7 @@ $(function() {
         // This function needs some work. It is using hardcoded paths.
         // Will the hardcoded path work on a Mac or Linux system?
         // We need to find a better way to get the file path.
+        // Source: https://community.octoprint.org/t/uploading-file-to-octopi-through-the-api-using-javascript/3938
         self.scanGcode = function() {
             var selectedFile = $("#gcode_file_select").val();
             if (!selectedFile) {
@@ -56,7 +57,7 @@ $(function() {
                 $("#scan_results").hide().html('<div class="alert alert-danger">⚠️ Please select a G-code file first!</div>').fadeIn();
                 return;
             }
-        
+            // 
             var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
             console.log("Fetching file from:", fileUrl);
         
@@ -115,6 +116,27 @@ $(function() {
         // Scan Gcode event button
         $("#scan_gcode_button").off("click").on("click", self.scanGcode);        
 
+    }
+
+    // In progress to test. Trying to retreive downloads folder by using children instead of hardcoding paths.
+    // If the above works for all environments, do we need this function?
+    // Source: OctoPrint-GcodeEditor-master\octoprint_GcodeEditor\static\js\GcodeEditor.js
+    // TODO: Test this function to see if it works on all OS environments.
+    function getGcodeFiles() {
+        var filesVM = ko.dataFor(document.querySelector("#files_wrapper"));
+        if (!filesVM) {
+            console.error("Files ViewModel not available.");
+            return [];
+        }
+    
+        var fileList = filesVM.listHelper.items();
+        if (!fileList || fileList.length === 0) return [];
+    
+        return fileList.map(file => ({
+            name: file.name,
+            path: file.path || "No path available",
+            download: file.refs?.download || "No download URL",
+        }));
     }
 
     // FIX: Moved the function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
