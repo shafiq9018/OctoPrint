@@ -6,7 +6,7 @@ $(function() {
         var _selectedFilePath; // Will hold the selected file path
         var _selectedFileName; // Will hold the selected file name
 
-        // 🔹 Configurable list of potentially malicious G-code commands
+        // Configurable list of potentially malicious G-code commands
         self.maliciousCommands = new Set([
             "M30",  // Delete file from SD card
             "M112", // Emergency stop
@@ -77,83 +77,122 @@ $(function() {
         // Source: https://community.octoprint.org/t/uploading-file-to-octopi-through-the-api-using-javascript/3938
         self.scanGcode = function() {
             var selectedFile = $("#gcode_file_select").val();
+            
+            // Fade out old results smoothly before scanning new files and after selecting a file.
+            $("#scan_results").fadeOut(300, function () {});
+                   
             if (!selectedFile) {
                 console.log("No file selected.");
-                $("#scan_results").hide().html('<div class="alert alert-danger">⚠️ Please select a G-code file first!</div>').fadeIn();
+                
+                // Ensure the scan_results div is visible
+                $("#scan_results").show();
+            
+                // Update or create an error message
+                let errorMessage = $("#scan_message");
+                if (errorMessage.length === 0) {
+                    $("#scan_results").prepend('<div id="scan_message" class="alert alert-danger">⚠️ Please select a G-code file first!</div>');
+                } else {
+                    errorMessage.text("⚠️ Please select a G-code file first!").fadeIn();
+                }
+                
                 return;
             }
-
+           
+            // Hide the error when a valid file is selected
+            $("#scan_message").fadeOut();
+            
             // This is a hardcoded path. Will this work on a Mac or Linux system?
             //var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
            // var path = require('path');
            // var fileUrl = path.join( "downloads","files","local", encodeURIComponent(selectedFile));
-            var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
-            console.log("Fetching file from:", fileUrl);
-        
-            // Fetch G-code file
-            $.ajax({
-                url: fileUrl,
-                type: "GET",
-                dataType: "text",
-                success: function(data) {
-                    console.log("G-code file loaded successfully.");
-                    console.log("First 10 lines:\n", data.split("\n").slice(0, 10).join("\n"));
-        
-                    // Call the process function to scan for malicious commands
-                    self.processGcode(data);
-                },
-                error: function(xhr) {
-                    console.log("Failed to fetch G-code file: " + xhr.responseText);
+           var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
+           console.log("Fetching file from:", fileUrl);
+
+           $.ajax({
+               url: fileUrl,
+               type: "GET",
+               dataType: "text",
+               success: function(data) {
+                   console.log("G-code file loaded successfully.");
+                   console.log("First 10 lines:\n", data.split("\n").slice(0, 10).join("\n"));
+
+                   // Scan for malicious commands dynamically
+                   self.processGcode(data, selectedFile); // Process the G-code content
+               },
+               error: function(xhr) {
+                   console.log("Failed to fetch G-code file: " + xhr.responseText);
+               }
+           });
+       };
+
+       self.processGcode = function(gcodeContent, selectedFile) {
+        console.log("Scanning G-code content...");
+    
+        var detectedIssues = [];
+        var gcodeLines = gcodeContent.split("\n");
+    
+        gcodeLines.forEach((line, index) => {
+            var cleanLine = line.trim().split(";")[0]; // Remove comments
+    
+            self.maliciousCommands.forEach(command => {
+                // This complicated RegExp ensures we match the command at the start of the line
+                // and not as part of a longer command (e.g., "M1041" should not match "M104")
+                // -Shafiq
+                if (new RegExp(`^${command}(\\s|$)`).test(cleanLine.toUpperCase())) {
+
+                    // Ignore safe G92 E0 (normal extruder reset)
+                    if (
+                        (command === "G92" && cleanLine.trim().toUpperCase() === "G92 E0")
+                    ) {
+                        return; // Skip these safe cases but continue scanning other commands
+                    }
+
+                    // Ignore G28 if it only homes one axis (X, Y, or Z alone)
+                    if (command === "G28") {
+                        let params = cleanLine.replace("G28", "").trim().toUpperCase();
+                        
+                        // If no parameters OR only one axis (X, Y, or Z) is homed, it's safe
+                        if (params === "" || params === "X0" || params === "Y0" || params === "Z0") {
+                            return; // Skip these safe cases
+                        }
+
+                        // Otherwise, it's flagged as unsafe (e.g., "G28 X0 Y0")
+                        detectedIssues.push(`⚠️ Warning: Potential unsafe homing on Line ${index + 1}: ${line}`);
+                    }
+
+
+                    let parts = cleanLine.split(" "); // Split command into parts
+                    let value = parseFloat(parts[1]?.substring(1)); // Extract numerical value (e.g., M104 **S205**)
+    
+                    // Apply safety checks for temperature-based commands
+                    if (command === "M104" && value > 260) { // Extruder temp too high
+                        detectedIssues.push(`⚠️ Warning: High extruder temp on Line ${index + 1}: ${line}`);
+                    } else if (command === "M140" && value > 110) { // Bed temp too high
+                        detectedIssues.push(`⚠️ Warning: High bed temp on Line ${index + 1}: ${line}`);
+                    } else if (command !== "M104" && command !== "M140") {
+                        // Flag all other malicious commands (e.g., M30, M500)
+                        detectedIssues.push(`⚠️ Warning: ${command} found on Line ${index + 1}: ${line}`);
+                    }
                 }
             });
-        };
-
-        self.processGcode = function(gcodeContent) {
-            console.log("Scanning G-code content...");
-
-            var detectedIssues = [];
-            var gcodeLines = gcodeContent.split("\n");
-
-            gcodeLines.forEach((line, index) => {
-                var cleanLine = line.trim().split(";")[0]; // Remove comments
-
-                self.maliciousCommands.forEach(command => { // Iterate over malicious commands
-                    if (cleanLine.toUpperCase().startsWith(command)) { // Check for malicious commands
-                        detectedIssues.push(`⚠️ Warning: ${command} found on Line ${index + 1}: ${line}`); // Log issue
-                    }
-                }); 
-            });
-        
-        // self.processGcode = function(gcodeContent) {
-        //     console.log("Scanning G-code content...");
-        
-        //     var detectedIssues = [];
-        //     var gcodeLines = gcodeContent.split("\n"); // Split content into lines
-            
-        //     detectedIssues.push(` I used G28 as a test on a good file and it was detected. `);
-        //     // Scan for unsafe commands
-        //     // We are using g28 for testing purposes
-        //     gcodeLines.forEach((line, index) => {
-        //         if (line.includes("G28")) {  // Using G28 as a test
-        //             detectedIssues.push(`⚠️ Warning: G28 found on Line ${index + 1}: ${line}`);
-        //         }
-        //     });
+        });   
         
             // Ensure results are updated in the UI
             var resultList = $("#scan_results_list");
             resultList.empty(); // Clear previous results
         
             if (detectedIssues.length === 0) {
-                console.log("No unsafe commands detected.");
-                resultList.append("<li>No unsafe commands detected.</li>");
+                console.log("✅ Scan Passed: No unsafe commands detected.");
+                resultList.append('<li style="color: green; font-weight: bold;">✅ Scan Passed: No unsafe commands detected in <b>' + selectedFile + '</b>.</li>');
             } else {
-                console.log("⚠️ Detected Issues:");
+                console.log("⚠️ Scan Failed: Unsafe commands found.");
                 detectedIssues.forEach(issue => {
                     resultList.append("<li>" + issue + "</li>");
                 });
+                resultList.prepend('<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>');
             }
-        
-            $("#scan_results").fadeIn(); // Ensure the results section is visible
+            
+            $("#scan_results").fadeIn(400); // Ensure the results section is visible
         };
 
         // Scan Gcode event button
