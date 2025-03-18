@@ -89,6 +89,7 @@ $(function() {
             
                 // Update or create an error message
                 let errorMessage = $("#scan_message");
+                // errorMessage.empty(); // Clear previous results not working. Need to fix this.
                 if (errorMessage.length === 0) {
                     $("#scan_results").prepend('<div id="scan_message" class="alert alert-danger">⚠️ Please select a G-code file first!</div>');
                 } else {
