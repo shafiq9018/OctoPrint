@@ -6,6 +6,31 @@ $(function() {
         var _selectedFilePath; // Will hold the selected file path
         var _selectedFileName; // Will hold the selected file name
 
+        // 🔹 Configurable list of potentially malicious G-code commands
+        self.maliciousCommands = new Set([
+            "M30",  // Delete file from SD card
+            "M112", // Emergency stop
+            "M500", // Save settings to EEPROM
+            "M502", // Reset settings to factory defaults
+            "M303", // PID autotune (can overheat components)
+            "M140", // Set bed temperature
+            "M104", // Set extruder temperature
+            "M206", // Offset Z-axis (could crash nozzle into bed)
+            "G28",  // Home all axes (unexpected movements)
+            "G92"   // Set position (can fake extrusion)
+        ]);
+
+        // Allow users to dynamically add malicious commands
+        self.addMaliciousCommand = function(command) {
+            self.maliciousCommands.add(command.toUpperCase());
+            console.log(`✅ Added: ${command}`);
+        };
+
+        // Allow users to dynamically remove malicious commands
+        self.removeMaliciousCommand = function(command) {
+            self.maliciousCommands.delete(command.toUpperCase());
+            console.log(`❌ Removed: ${command}`);
+        };        
         
         self.populateDropdown = function() {
             var dropdown = $("#gcode_file_select");
@@ -57,7 +82,11 @@ $(function() {
                 $("#scan_results").hide().html('<div class="alert alert-danger">⚠️ Please select a G-code file first!</div>').fadeIn();
                 return;
             }
-            // 
+
+            // This is a hardcoded path. Will this work on a Mac or Linux system?
+            //var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
+           // var path = require('path');
+           // var fileUrl = path.join( "downloads","files","local", encodeURIComponent(selectedFile));
             var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
             console.log("Fetching file from:", fileUrl);
         
@@ -70,7 +99,7 @@ $(function() {
                     console.log("G-code file loaded successfully.");
                     console.log("First 10 lines:\n", data.split("\n").slice(0, 10).join("\n"));
         
-                    // Call the process function to scan for G28 commands
+                    // Call the process function to scan for malicious commands
                     self.processGcode(data);
                 },
                 error: function(xhr) {
@@ -78,21 +107,37 @@ $(function() {
                 }
             });
         };
-        
+
         self.processGcode = function(gcodeContent) {
             console.log("Scanning G-code content...");
-        
+
             var detectedIssues = [];
-            var gcodeLines = gcodeContent.split("\n"); // Split content into lines
-            
-            detectedIssues.push(` I used G28 as a test on a good file and it was detected. `);
-            // Scan for unsafe commands
-            // We are using g28 for testing purposes
+            var gcodeLines = gcodeContent.split("\n");
+
             gcodeLines.forEach((line, index) => {
-                if (line.includes("G28")) {  // Using G28 as a test
-                    detectedIssues.push(`⚠️ Warning: G28 found on Line ${index + 1}: ${line}`);
-                }
+                var cleanLine = line.trim().split(";")[0]; // Remove comments
+
+                self.maliciousCommands.forEach(command => { // Iterate over malicious commands
+                    if (cleanLine.toUpperCase().startsWith(command)) { // Check for malicious commands
+                        detectedIssues.push(`⚠️ Warning: ${command} found on Line ${index + 1}: ${line}`); // Log issue
+                    }
+                }); 
             });
+        
+        // self.processGcode = function(gcodeContent) {
+        //     console.log("Scanning G-code content...");
+        
+        //     var detectedIssues = [];
+        //     var gcodeLines = gcodeContent.split("\n"); // Split content into lines
+            
+        //     detectedIssues.push(` I used G28 as a test on a good file and it was detected. `);
+        //     // Scan for unsafe commands
+        //     // We are using g28 for testing purposes
+        //     gcodeLines.forEach((line, index) => {
+        //         if (line.includes("G28")) {  // Using G28 as a test
+        //             detectedIssues.push(`⚠️ Warning: G28 found on Line ${index + 1}: ${line}`);
+        //         }
+        //     });
         
             // Ensure results are updated in the UI
             var resultList = $("#scan_results_list");
@@ -110,8 +155,6 @@ $(function() {
         
             $("#scan_results").fadeIn(); // Ensure the results section is visible
         };
-        
-        
 
         // Scan Gcode event button
         $("#scan_gcode_button").off("click").on("click", self.scanGcode);        
