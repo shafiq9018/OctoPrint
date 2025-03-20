@@ -95,7 +95,7 @@ $(function() {
                 } else {
                     errorMessage.text("⚠️ Please select a G-code file first!").fadeIn();
                 }
-                
+
                 return;
             }
            
@@ -128,7 +128,7 @@ $(function() {
 
        self.processGcode = function(gcodeContent, selectedFile) {
         console.log("Scanning G-code content...");
-    
+
         var detectedIssues = [];
         var gcodeLines = gcodeContent.split("\n");
     
@@ -151,14 +151,24 @@ $(function() {
                     // Ignore G28 if it only homes one axis (X, Y, or Z alone)
                     if (command === "G28") {
                         let params = cleanLine.replace("G28", "").trim().toUpperCase();
-                        
-                        // If no parameters OR only one axis (X, Y, or Z) is homed, it's safe
-                        if (params === "" || params === "X0" || params === "Y0" || params === "Z0") {
-                            return; // Skip these safe cases
+                    
+                        // Good Ignore ALL `G28` before line 50
+                        if (index < 50) {
+                            return;
+                        }
+                    
+                        // Good Ignore safe moves (`G28 X0 Y0`)
+                        if (params.includes("X0") || params.includes("Y0")) {
+                            return;
                         }
 
-                        // Otherwise, it's flagged as unsafe (e.g., "G28 X0 Y0")
-                        detectedIssues.push(`⚠️ Warning: Potential unsafe homing on Line ${index + 1}: ${line}`);
+                        // Bad Only flag `G28 Z0` (possible nozzle crash)
+                        // > line 50
+                        if (params.includes("Z0")) {
+                            if (!detectedIssues.includes(`⚠️ Warning: Potential unsafe Z-homing on Line ${index + 1}`)) {
+                                detectedIssues.push(`⚠️ Warning: Potential unsafe Z-homing on Line ${index + 1}: ${line}`);
+                            }
+                        }
                     }
 
 
@@ -281,9 +291,14 @@ $(function() {
         }
     }
 
+    // Register the plugin with OctoPrint's view model system
+    // filesViewModel is OctoPrint’s built-in Knockout.js ViewModel 
+    // that manages file uploads, storage, and selection in the 
+    // OctoPrint file manager. It allows plugins to interact with 
+    // the list of G-code files stored in OctoPrint.
     OCTOPRINT_VIEWMODELS.push({
         construct: GcodeScannerViewModel,
-        dependencies: ["filesViewModel"],
-        elements: ["#gcode_scanner_tab"]
+        dependencies: ["filesViewModel"], // OctoPrint's file manager ViewModel. It allows plugins to interact with the list of G-code files stored in OctoPrint.
+        elements: ["#gcode_scanner_tab"]  // The tab where the plugin's UI will be displayed
     });
 });
