@@ -77,7 +77,7 @@ $(function() {
         // Source: https://community.octoprint.org/t/uploading-file-to-octopi-through-the-api-using-javascript/3938
         self.scanGcode = function() {
             var selectedFile = $("#gcode_file_select").val();
-            
+
             // Fade out old results smoothly before scanning new files and after selecting a file.
             $("#scan_results").fadeOut(300, function () {});
                    
@@ -103,9 +103,9 @@ $(function() {
             $("#scan_message").fadeOut();
             
             // This is a hardcoded path. Will this work on a Mac or Linux system?
-            //var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
-           // var path = require('path');
-           // var fileUrl = path.join( "downloads","files","local", encodeURIComponent(selectedFile));
+            // var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
+            // var path = require('path');
+            // var fileUrl = path.join( "downloads","files","local", encodeURIComponent(selectedFile));
            var fileUrl = "/downloads/files/local/" + encodeURIComponent(selectedFile);
            console.log("Fetching file from:", fileUrl);
 
@@ -128,7 +128,12 @@ $(function() {
 
        self.processGcode = function(gcodeContent, selectedFile) {
         console.log("Scanning G-code content...");
-
+        // I need to add message here saying SCAN RESULTS
+        // let newScanMessage = $("#scan_message");
+        // newScanMessage.text("SCAN RESULTS")
+        //     .css("color", "green")
+        //     .css("background-color", "lightgreen")
+        //     .fadeIn();
         var detectedIssues = [];
         var gcodeLines = gcodeContent.split("\n");
     
