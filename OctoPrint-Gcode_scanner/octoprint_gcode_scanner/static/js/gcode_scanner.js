@@ -114,6 +114,8 @@ $(function() {
                type: "GET",
                dataType: "text",
                success: function(data) {
+                // Please note all console.log are for debugging purposes.
+                   console.log("File content:", data);
                    console.log("G-code file loaded successfully.");
                    console.log("First 10 lines:\n", data.split("\n").slice(0, 10).join("\n"));
 
@@ -154,6 +156,9 @@ $(function() {
                     }
 
                     // Ignore G28 if it only homes one axis (X, Y, or Z alone)
+                    // TODO: Add more checks for G28 to ensure it's safe
+                    // such as checking if it homes all axes with zero and nothing greater than zero
+                    // Shafiq.
                     if (command === "G28") {
                         let params = cleanLine.replace("G28", "").trim().toUpperCase();
                     
@@ -163,6 +168,9 @@ $(function() {
                         }
                     
                         // Good Ignore safe moves (`G28 X0 Y0`)
+                        // If the command is `G28` and it has a Z0 then it is a bad command.
+                        // This case needs to be tested. I don't think that this line is enough
+                        // so we added the line below to check for Z0.
                         if (params.includes("X0") || params.includes("Y0")) {
                             return;
                         }
@@ -175,7 +183,6 @@ $(function() {
                             }
                         }
                     }
-
 
                     let parts = cleanLine.split(" "); // Split command into parts
                     let value = parseFloat(parts[1]?.substring(1)); // Extract numerical value (e.g., M104 **S205**)
@@ -191,7 +198,7 @@ $(function() {
                     }
                 }
             });
-        });   
+        });
         
             // Ensure results are updated in the UI
             var resultList = $("#scan_results_list");
