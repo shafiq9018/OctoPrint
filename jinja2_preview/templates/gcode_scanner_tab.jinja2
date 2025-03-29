@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gcode Scanner Preview</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body { padding: 2rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Gcode Scanner</h2>
+        <p>Select a file and scan for unsafe G-code commands.</p>
+
+        <!-- Malicious Command Config Section -->
+        <div id="malicious_command_config" class="border p-3 mb-4 bg-light rounded">
+            <h4>☣️ Malicious G-code Commands</h4>
+            <div class="form-inline mb-2">
+                <input type="text" class="form-control mr-2" placeholder="Add command (e.g., G420)">
+                <button class="btn btn-success btn-sm mr-1">Add</button>
+                <button class="btn btn-danger btn-sm">Remove</button>
+            </div>
+            <button class="btn btn-link p-0">▶️ Malicious Command Library</button>
+            <div class="mt-3" style="display: none;">
+                <div><input type="checkbox" checked> <code>M30</code> — Delete file from SD card</div>
+                <div><input type="checkbox" checked> <code>M112</code> — Emergency stop</div>
+                <!-- Add more mock entries as needed -->
+            </div>
+        </div>
+
+        <!-- G-code File Select and Scan -->
+        <div class="form-inline mb-3">
+            <label class="mr-2" for="gcode_file_select">Select a file:</label>
+            <select id="gcode_file_select" class="form-control mr-2">
+                <option>-- Choose a file --</option>
+            </select>
+            <button class="btn btn-primary">Scan G-code</button>
+        </div>
+
+        <!-- Scan Results -->
+        <div id="scan_results" class="alert alert-success" role="alert">
+            ✅ Scan Passed: No unsafe commands detected.
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='gcode_scanner.js') }}"></script>
+
+</body>
+</html>
