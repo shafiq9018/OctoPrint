@@ -1,43 +1,91 @@
 <div id="gcode_scanner_tab">
-    <h2>Gcode Scanner</h2>
-    <p>Select a file and scan for unsafe G-code commands.</p>
+    <div class="row-fluid">
 
-    <!-- File selector -->
-    <div id="gcode_controls" class="control-group" style="display: flex; align-items: center; gap: 10px;">
-        <label for="gcode_file_select">{{ _('Select a file:') }}</label>
-        <select id="gcode_file_select" class="form-control" style="width: auto;">
-            <option value="">{{ _('-- Choose a file --') }}</option>
-        </select>
-        <button id="scan_gcode_button" class="btn btn-primary">{{ _('Scan G-code') }}</button>
-    </div>
+        <!-- Suspicious G-code -->
+        <div class="span6">
+            <h1>{{ _('Suspicious G-code') }}</h1>
+            <div id="suspicious_commands_scrollbox"
+                style="height: 198px; overflow-y: auto; overflow-x: auto; white-space: nowrap; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                <p>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M30">{{ _('"M30" Delete file from SD card') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M112">{{ _('"M112" Emergency stop') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M500">{{ _('"M500" Save settings to EEPROM') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M303">{{ _('"M303" PID autotune (can overheat components)') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M140">{{ _('"M140" Set bed temperature') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M104">{{ _('"M104" Set extruder temperature') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: M206">{{ _('"M206" Offset Z-axis (could crash nozzle into bed)') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: G28">{{ _('"G28" Home all axes (unexpected movements)') }}
+                    </label>
+                    <label class="checkbox">
+                        <input type="checkbox" data-bind="checked: G92">{{ _('"G92" Set position (can fake extrusion)') }}
+                    </label>
+                </p>
+            </div>
+            <p>
+                <button class="btn btn-block" data-bind="click: resetDefaults">{{ _('Reset Defaults') }}</button>
+                <button class="btn btn-block" data-bind="click: extraButton">{{ _('Extra Button') }}</button>
+            </p>
+        </div>
 
-    <hr>
+        <!-- User Specified G-code -->
+        <div class="span6">
+            <h1>{{ _('User Specified G-Code') }}</h1>
+            <div id="user_commands_scrollbox"
+                style="height: 198px; overflow-y: auto; overflow-x: auto; white-space: nowrap; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+                <div id="user_commands">
+                    <label><input type="checkbox"> M999  Causes unexpected resets</label>
+                    <label><input type="checkbox"> M998  Triggers firmware reinitialization</label>
+                    <label><input type="checkbox"> M997  Conflicts with thermal settings</label>
+                    <label><input type="checkbox"> M996  Known to bypass safety checks</label>
+                    <label><input type="checkbox"> M995  Interferes with bed leveling</label>
+                    <label><input type="checkbox"> M994  Disrupts motion planning</label>
+                    <label><input type="checkbox"> M993  Temporarily disables endstops</label>
+                    <label><input type="checkbox"> M992  Engages silent mode (could mask issues)</label>
+                    <label><input type="checkbox"> M991  May trigger emergency shutdown</label>
+                    <label><input type="checkbox"> M990  Unknown effect, caution advised</label>
+                </div>
+            </div>
+            <p>
+                <button class="btn btn-block" data-bind="click: userAdd">{{ _('Add Commands') }}</button>
+                <button class="btn btn-block" data-bind="click: clearCommands">{{ _('Clear All') }}</button>
+            </p>
+        </div>
 
-    <!-- Suspicious Command Checkboxes -->
-    <fieldset>
-        <legend>{{ _('Suspicious G-code Commands') }}</legend>
-        <div id="suspicious_commands" class="controls"></div>
-        <button id="reset_suspicious" class="btn btn-small btn-warning">{{ _('Reset Suspicious') }}</button>
-    </fieldset>
-
-    <hr>
-
-    <!-- User Defined Commands -->
-    <fieldset>
-        <legend>{{ _('User-Specified Commands') }}</legend>
-        <div id="user_commands" class="controls" style="max-height: 180px; overflow-y: scroll;"></div>
-        <button id="add_user_command" class="btn btn-small btn-info">{{ _('Add Command') }}</button>
-        <button id="clear_user_commands" class="btn btn-small btn-danger">{{ _('Remove All') }}</button>
-    </fieldset>
-
-    <hr>
-
-    <!-- Results Section -->
-    <div id="scan_results" style="display: none;">
-        <h4 id="scan_results_title"></h4>
-        <ul id="scan_results_list"></ul>
+        <!-- File Selector & Scan Results -->
+        <div class="span12">
+            <h2>Gcode Scanner</h2>
+            <p>Select a file and scan for unsafe G-code commands.</p>
+            <div id="gcode_controls" class="control-group" style="display: flex; align-items: center; gap: 10px;">
+                <label for="gcode_file_select">{{ _('Select a file:') }}</label>
+                <select id="gcode_file_select" class="form-control" style="width: auto;">
+                    <option value="">{{ _('-- Choose a file --') }}</option>
+                </select>
+                <button id="scan_gcode_button" class="btn btn-primary">{{ _('Scan G-code') }}</button>
+            </div>
+            <div id="scan_results" style="display: none;">
+                <h4 id="scan_results_title"></h4>
+                <ul id="scan_results_list"></ul>
+            </div>
+        </div>
     </div>
 </div>
+
+
 
 
 {# CIS 4398: Gcode Scanner Tab Template Notes#}
