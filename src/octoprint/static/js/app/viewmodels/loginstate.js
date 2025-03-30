@@ -575,6 +575,7 @@ $(function () {
                 .extend({notify: "always"});
         };
 
+        // IMPORTANT: RAF
         self.hasAnyPermissionKo = function () {
             /**
               Knockout wrapper for hasAnyPermission

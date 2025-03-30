@@ -266,7 +266,7 @@ class PermissionsMetaClass(type):
 
         return None
 
-
+# IMPORTANT: RAF
 class Permissions(metaclass=PermissionsMetaClass):
     # Special permission
     ADMIN = OctoPrintPermission(

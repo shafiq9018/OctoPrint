@@ -1013,9 +1013,18 @@ def fetch_template_data(refresh=False):
         ),
     }
 
-    # tabs
+    # tabs TODO-RAF: Make sure to fix this part
 
     templates["tab"]["entries"] = {
+        "g_code_scan": (
+            gettext("GC Scan"),
+            {
+                "template": "tabs/g_code_scan.jinja2",
+                "_div": "gcscan",
+                "styles": ["display: none;"],
+                "data_bind" : "visible: loginState.hasAnyPermissionKo(access.permissions.ADMIN)"
+            }
+        ),
         "temperature": (
             gettext("Temperature"),
             {

@@ -81,6 +81,8 @@ class GcodeviewerPlugin(
     @octoprint.plugin.BlueprintPlugin.route(
         "/skipuntilcheck/<string:origin>/<path:filename>", methods=["GET"]
     )
+
+    # IMPORTANT: RAF
     @no_firstrun_access
     @Permissions.GCODE_VIEWER.require(403)
     @Permissions.FILES_DOWNLOAD.require(403)
