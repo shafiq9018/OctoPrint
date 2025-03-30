@@ -1,6 +1,6 @@
 <div id="gcode_scanner_tab">
+<h2 class="scan-settings-title">GC Scan Settings</h2>
     <div class="row-fluid">
-
         <!-- Suspicious G-code -->
         <div class="span6">
             <h1>{{ _('Suspicious G-code') }}</h1>
@@ -37,8 +37,8 @@
                 </p>
             </div>
             <p>
-                <button class="btn btn-block" data-bind="click: resetDefaults">{{ _('Reset Defaults') }}</button>
-                <button class="btn btn-block" data-bind="click: extraButton">{{ _('Extra Button') }}</button>
+                <button class="btn btn-primary btn-block" data-bind="click: resetDefaults">{{ _('Reset Defaults') }}</button>
+                <button class="btn btn-primary btn-block" data-bind="click: extraButton">{{ _('Extra Button') }}</button>
             </p>
         </div>
 
@@ -61,15 +61,16 @@
                 </div>
             </div>
             <p>
-                <button class="btn btn-block" data-bind="click: userAdd">{{ _('Add Commands') }}</button>
-                <button class="btn btn-block" data-bind="click: clearCommands">{{ _('Clear All') }}</button>
+                <button class="btn btn-primary btn-block" data-bind="click: userAdd">{{ _('Add Commands') }}</button>
+                <button class="btn btn-primary btn-block" data-bind="click: deleteCommands">{{ _('Delete All') }}</button>
             </p>
         </div>
 
         <!-- File Selector & Scan Results -->
         <div class="span12">
             <h2>Gcode Scanner</h2>
-            <p>Select a file and scan for unsafe G-code commands.</p>
+            <!-- This message should be seen by the user so I added the css for this. Shafiq -->
+            <p class="message-text">Select a file and scan for unsafe G-code commands.</p>
             <div id="gcode_controls" class="control-group" style="display: flex; align-items: center; gap: 10px;">
                 <label for="gcode_file_select">{{ _('Select a file:') }}</label>
                 <select id="gcode_file_select" class="form-control" style="width: auto;">
