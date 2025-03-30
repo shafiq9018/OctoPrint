@@ -78,7 +78,7 @@ $(function() {
             `;
             $("#user_commands").append(labelHtml);
             self.updateMaliciousCommands();
-            console.log(`✅ Added custom G-code: ${cmd}${desc ? " (" + desc + ")" : ""}`);
+            console.log(`Added custom G-code: ${cmd}${desc ? " (" + desc + ")" : ""}`);
         };
         
         
