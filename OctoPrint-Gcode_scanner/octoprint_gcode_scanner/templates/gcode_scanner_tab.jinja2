@@ -1,39 +1,56 @@
 <div id="gcode_scanner_tab">
     <h2>Gcode Scanner</h2>
-
-    <!-- 🆕 MOVE THIS TO THE TOP -->
-    <div id="malicious_command_config" style="margin-top: 10px; border: 1px solid #ccc; padding: 10px; border-radius: 6px; background: #f9f9f9;">
-        <h4>☣️ Malicious G-code Commands</h4>
-
-        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-            <input type="text" id="new_command_input" class="form-control" style="width: 200px;" placeholder="Add command (e.g., G420)">
-            <button id="add_command_button" class="btn btn-sm btn-success">Add</button>
-            <button id="remove_selected_button" class="btn btn-sm btn-danger">Remove</button>
-        </div>
-
-        <div>
-            <button id="toggle_command_list" class="btn btn-link" style="padding-left: 0;">▶️ Malicious Command Library</button>
-        </div>
-
-        <div id="malicious_commands_checkboxes" style="display: none; margin-top: 10px; padding-left: 15px;">
-            <!-- Dynamic checkboxes -->
-        </div>
-    </div>
-
     <p>Select a file and scan for unsafe G-code commands.</p>
 
-    <!-- File selector and scan -->
-    <div id="gcode_controls" style="display: flex; align-items: center; gap: 10px; margin-top: 20px;">
-        <label for="gcode_file_select">Select a file:</label>
+    <!-- File selector -->
+    <div id="gcode_controls" class="control-group" style="display: flex; align-items: center; gap: 10px;">
+        <label for="gcode_file_select">{{ _('Select a file:') }}</label>
         <select id="gcode_file_select" class="form-control" style="width: auto;">
-            <option value="">-- Choose a file --</option>
+            <option value="">{{ _('-- Choose a file --') }}</option>
         </select>
-        <button id="scan_gcode_button" class="btn btn-primary">Scan G-code</button>
+        <button id="scan_gcode_button" class="btn btn-primary">{{ _('Scan G-code') }}</button>
     </div>
 
-    <!-- Results -->
+    <hr>
+
+    <!-- Suspicious Command Checkboxes -->
+    <fieldset>
+        <legend>{{ _('Suspicious G-code Commands') }}</legend>
+        <div id="suspicious_commands" class="controls"></div>
+        <button id="reset_suspicious" class="btn btn-small btn-warning">{{ _('Reset Suspicious') }}</button>
+    </fieldset>
+
+    <hr>
+
+    <!-- User Defined Commands -->
+    <fieldset>
+        <legend>{{ _('User-Specified Commands') }}</legend>
+        <div id="user_commands" class="controls" style="max-height: 180px; overflow-y: scroll;"></div>
+        <button id="add_user_command" class="btn btn-small btn-info">{{ _('Add Command') }}</button>
+        <button id="clear_user_commands" class="btn btn-small btn-danger">{{ _('Remove All') }}</button>
+    </fieldset>
+
+    <hr>
+
+    <!-- Results Section -->
     <div id="scan_results" style="display: none;">
         <h4 id="scan_results_title"></h4>
         <ul id="scan_results_list"></ul>
     </div>
 </div>
+
+
+{# CIS 4398: Gcode Scanner Tab Template Notes#}
+{#
+    The template is a simple HTML structure with a header, a paragraph, a file selector, a button, and a list to display the scan results.
+    
+    - `gcode_file_select`: A dropdown list that will contain the list of files available in the OctoPrint instance.
+    - `scan_gcode_button`: A button that will trigger the scan process.
+    - `scan_results`: A `<div>` that will contain the list of unsafe G-code commands found in the file.
+    - `scan_results_list`: An unordered list to display unsafe commands.
+    - `scan_results` is hidden by default and only displayed when the scan process completes.
+
+    **Step 3: Create the JavaScript File**
+    The JavaScript file will contain the logic to fetch the list of files available in the OctoPrint instance, scan the selected file, and display the scan results.
+    Create a new JavaScript file named `gcode_scanner.js` in the `static/js` directory.
+#}
