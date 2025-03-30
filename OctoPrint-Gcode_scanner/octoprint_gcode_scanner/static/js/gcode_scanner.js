@@ -20,18 +20,87 @@ $(function() {
             "G92"   // Set position (can fake extrusion)
         ]);
 
-        // Allow users to dynamically add malicious commands
-        self.addMaliciousCommand = function(command) {
-            self.maliciousCommands.add(command.toUpperCase());
-            console.log(`✅ Added: ${command}`);
+        // This function is called when the plugin is loaded
+        // This function is used to modify the list above. If the user unchecks and checks different 
+        // checkboxes, the list will be updated. And the scan will be based off the updated list.
+        // Shafiq.
+        self.updateMaliciousCommands = function () {
+            self.maliciousCommands.clear();  // Delete all of the above. Do we need keep the default ones?
+            // Get all checked checkboxes with the class "suspicious_cb"
+            $(".suspicious_cb:checked").each(function () {
+                self.maliciousCommands.add(this.value.toUpperCase());
+            });
+
+            // Right side User-defined checkboxes
+            $("#user_commands input[type='checkbox']:checked").each(function () {
+                let labelText = $(this).parent().text().trim(); // e.g., "M999 Causes unexpected resets"
+                let command = labelText.split(" ")[0].toUpperCase(); // Extract "M999"
+                self.maliciousCommands.add(command);
+            });
+
+
+            // Print the updated list to the console for debugging.
+            console.log("Updated malicious commands:", Array.from(self.maliciousCommands));
+        };               
+        
+        // Clears all suspicious checkboxes (unchecks everything)
+        self.clearSelections = function () {
+            $(".suspicious_cb").prop("checked", false);
+            self.updateMaliciousCommands();
+            console.log(" Cleared all suspicious G-code selections.");
         };
 
-        // Allow users to dynamically remove malicious commands
-        self.removeMaliciousCommand = function(command) {
-            self.maliciousCommands.delete(command.toUpperCase());
-            console.log(`❌ Removed: ${command}`);
-        };        
+        // Resets all suspicious checkboxes (checks everything)
+        self.resetDefaults = function () {
+            $(".suspicious_cb").prop("checked", true);
+            self.updateMaliciousCommands();
+            console.log(" Reset suspicious G-code selections to default.");
+        };
+
+        // This function is called when the user clicks the "Add" button
+        // in the user-defined commands section. It allows the user to add custom G-code commands.
+        self.userAdd = function () {
+            let cmd = prompt("Enter a G-code command (e.g., M999):").trim().toUpperCase();
+            if (!cmd || !/^M\d+$/.test(cmd)) {
+                alert("❌ Please enter a valid G-code (e.g., M999)");
+                return;
+            }
+            let desc = prompt("Enter a short description (optional):", "").trim();
+            // Avoid duplicates
+            if ($(`#user_commands input[value='${cmd}']`).length > 0) {
+                alert("⚠️ This command is already listed.");
+                return;
+            }
+            let labelHtml = `
+                <label>
+                    <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> ${cmd}${desc ? " – " + desc : ""}
+                </label>
+            `;
+            $("#user_commands").append(labelHtml);
+            self.updateMaliciousCommands();
+            console.log(`✅ Added custom G-code: ${cmd}${desc ? " (" + desc + ")" : ""}`);
+        };
         
+        
+        self.deleteCommands = function () {
+            $("#user_commands").empty();
+            self.updateMaliciousCommands();
+            console.log("All user-specified commands removed.");
+        };
+        
+        
+        // This function is called when the user checks or unchecks a checkbox
+        // in the default list of suspicious commands
+        $(".suspicious_cb").on("change", function () {
+            self.updateMaliciousCommands();
+        });
+        
+        // This function is called when the user checks or unchecks a checkbox
+        // in the user-defined commands section
+        $("#user_commands").on("change", "input[type='checkbox']", function () {
+            self.updateMaliciousCommands();
+        });
+
         self.populateDropdown = function() {
             var dropdown = $("#gcode_file_select");
             dropdown.empty();
@@ -214,34 +283,19 @@ $(function() {
         }
             
             $("#scan_results").fadeIn(400); // Ensure the results section is visible
-        };
+        };      
+
+    
 
         // Scan Gcode event button
-        $("#scan_gcode_button").off("click").on("click", self.scanGcode);        
+        $("#scan_gcode_button").off("click").on("click", self.scanGcode);
 
+        // ✅ FIX: Listen for checkbox changes inside the ViewModel
+        $(".suspicious_cb").on("change", function () {
+            self.updateMaliciousCommands();
+        });
     }
 
-    // Example function to add a checkbox
-    self.addExampleCheckbox = function() {
-        try {
-            console.log("Adding example checkbox...");
-            const suspiciousEl = $("#suspicious_commands");
-            console.log("Selected element:", suspiciousEl); // Log the selected element
-    
-            const id = "suspicious_G1";
-            const label = "G1 // Example Move";
-    
-            suspiciousEl.append(`
-                <label class="checkbox">
-                    <input type="checkbox" class="suspicious_cb" id="${id}" value="G1">
-                    ${label}
-                </label><br>
-            `);
-            console.log("Checkbox appended.");
-        } catch (error) {
-            console.error("Error adding checkbox:", error);
-        }
-    };
     // Register the plugin with OctoPrint's view model system
     // filesViewModel is OctoPrint’s built-in Knockout.js ViewModel 
     // that manages file uploads, storage, and selection in the 
@@ -250,6 +304,7 @@ $(function() {
     OCTOPRINT_VIEWMODELS.push({
         construct: GcodeScannerViewModel,
         dependencies: ["filesViewModel"], // OctoPrint's file manager ViewModel. It allows plugins to interact with the list of G-code files stored in OctoPrint.
-        elements: ["#gcode_scanner_tab"]  // The tab where the plugin's UI will be displayed
+        elements: ["#gcode_scanner_tab"],  // The tab where the plugin's UI will be displayed
+        name: "gcodeScannerViewModel" // The name of the ViewModel. This is used to register the ViewModel with OctoPrint.
     });
 });
