@@ -7,6 +7,17 @@
 #scan_gcode_button {
     margin-left: 10px;
 }
+.message-text {
+    font-weight: bold;
+    font-size: 20px; /* adjustable for viewer liking */
+
+}
+
+.scan-settings-title {
+    font-size: 30px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
 
 /* Force everything to align correctly */
 #gcode_controls {

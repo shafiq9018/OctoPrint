@@ -20,18 +20,87 @@ $(function() {
             "G92"   // Set position (can fake extrusion)
         ]);
 
-        // Allow users to dynamically add malicious commands
-        self.addMaliciousCommand = function(command) {
-            self.maliciousCommands.add(command.toUpperCase());
-            console.log(`✅ Added: ${command}`);
+        // This function is called when the plugin is loaded
+        // This function is used to modify the list above. If the user unchecks and checks different 
+        // checkboxes, the list will be updated. And the scan will be based off the updated list.
+        // Shafiq.
+        self.updateMaliciousCommands = function () {
+            self.maliciousCommands.clear();  // Delete all of the above. Do we need keep the default ones?
+            // Get all checked checkboxes with the class "suspicious_cb"
+            $(".suspicious_cb:checked").each(function () {
+                self.maliciousCommands.add(this.value.toUpperCase());
+            });
+
+            // Right side User-defined checkboxes
+            $("#user_commands input[type='checkbox']:checked").each(function () {
+                let labelText = $(this).parent().text().trim(); // e.g., "M999 Causes unexpected resets"
+                let command = labelText.split(" ")[0].toUpperCase(); // Extract "M999"
+                self.maliciousCommands.add(command);
+            });
+
+
+            // Print the updated list to the console for debugging.
+            console.log("Updated malicious commands:", Array.from(self.maliciousCommands));
+        };               
+        
+        // Clears all suspicious checkboxes (unchecks everything)
+        self.clearSelections = function () {
+            $(".suspicious_cb").prop("checked", false);
+            self.updateMaliciousCommands();
+            console.log(" Cleared all suspicious G-code selections.");
         };
 
-        // Allow users to dynamically remove malicious commands
-        self.removeMaliciousCommand = function(command) {
-            self.maliciousCommands.delete(command.toUpperCase());
-            console.log(`❌ Removed: ${command}`);
-        };        
+        // Resets all suspicious checkboxes (checks everything)
+        self.resetDefaults = function () {
+            $(".suspicious_cb").prop("checked", true);
+            self.updateMaliciousCommands();
+            console.log(" Reset suspicious G-code selections to default.");
+        };
+
+        // This function is called when the user clicks the "Add" button
+        // in the user-defined commands section. It allows the user to add custom G-code commands.
+        self.userAdd = function () {
+            let cmd = prompt("Enter a G-code command (e.g., M999):").trim().toUpperCase();
+            if (!cmd || !/^M\d+$/.test(cmd)) {
+                alert("❌ Please enter a valid G-code (e.g., M999)");
+                return;
+            }
+            let desc = prompt("Enter a short description (optional):", "").trim();
+            // Avoid duplicates
+            if ($(`#user_commands input[value='${cmd}']`).length > 0) {
+                alert("⚠️ This command is already listed.");
+                return;
+            }
+            let labelHtml = `
+                <label>
+                    <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> ${cmd}${desc ? " – " + desc : ""}
+                </label>
+            `;
+            $("#user_commands").append(labelHtml);
+            self.updateMaliciousCommands();
+            console.log(`Added custom G-code: ${cmd}${desc ? " (" + desc + ")" : ""}`);
+        };
         
+        
+        self.deleteCommands = function () {
+            $("#user_commands").empty();
+            self.updateMaliciousCommands();
+            console.log("All user-specified commands removed.");
+        };
+        
+        
+        // This function is called when the user checks or unchecks a checkbox
+        // in the default list of suspicious commands
+        $(".suspicious_cb").on("change", function () {
+            self.updateMaliciousCommands();
+        });
+        
+        // This function is called when the user checks or unchecks a checkbox
+        // in the user-defined commands section
+        $("#user_commands").on("change", "input[type='checkbox']", function () {
+            self.updateMaliciousCommands();
+        });
+
         self.populateDropdown = function() {
             var dropdown = $("#gcode_file_select");
             dropdown.empty();
@@ -68,9 +137,7 @@ $(function() {
         // Populate dropdown on page load
         self.populateDropdown();
 
-        // Adding code for the button to scan the selected file.
-        // 
-
+  
         // This function needs some work. It is using hardcoded paths.
         // Will the hardcoded path work on a Mac or Linux system?
         // We need to find a better way to get the file path.
@@ -200,107 +267,33 @@ $(function() {
             });
         });
         
-            // Ensure results are updated in the UI
-            var resultList = $("#scan_results_list");
-            resultList.empty(); // Clear previous results
-        
-            if (detectedIssues.length === 0) {
-                console.log("✅ Scan Passed: No unsafe commands detected.");
-                resultList.append('<li style="color: green; font-weight: bold;">✅ Scan Passed: No unsafe commands detected in <b>' + selectedFile + '</b>.</li>');
-            } else {
-                console.log("⚠️ Scan Failed: Unsafe commands found.");
-                detectedIssues.forEach(issue => {
-                    resultList.append("<li>" + issue + "</li>");
-                });
-                resultList.prepend('<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>');
-            }
+        // Ensure results are updated in the UI
+        var resultList = $("#scan_results_list");
+        resultList.empty(); // Clear previous results
+    
+        if (detectedIssues.length === 0) {
+            console.log("✅ Scan Passed: No unsafe commands detected.");
+            resultList.append('<li style="color: green; font-weight: bold;">✅ Scan Passed: No unsafe commands detected in <b>' + selectedFile + '</b>.</li>');
+        } else {
+            console.log("⚠️ Scan Failed: Unsafe commands found.");
+            detectedIssues.forEach(issue => {
+                resultList.append("<li>" + issue + "</li>");
+            });
+            resultList.prepend('<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>');
+        }
             
             $("#scan_results").fadeIn(400); // Ensure the results section is visible
-        };
+        };      
+
+    
 
         // Scan Gcode event button
-        $("#scan_gcode_button").off("click").on("click", self.scanGcode);        
+        $("#scan_gcode_button").off("click").on("click", self.scanGcode);
 
-    }
-
-    // In progress to test. Trying to retreive downloads folder by using children instead of hardcoding paths.
-    // If the above works for all environments, do we need this function?
-    // Source: OctoPrint-GcodeEditor-master\octoprint_GcodeEditor\static\js\GcodeEditor.js
-    // TODO: Test this function to see if it works on all OS environments.
-    function getGcodeFiles() {
-        var filesVM = ko.dataFor(document.querySelector("#files_wrapper"));
-        if (!filesVM) {
-            console.error("Files ViewModel not available.");
-            return [];
-        }
-    
-        var fileList = filesVM.listHelper.items();
-        if (!fileList || fileList.length === 0) return [];
-    
-        return fileList.map(file => ({
-            name: file.name,
-            path: file.path || "No path available",
-            download: file.refs?.download || "No download URL",
-        }));
-    }
-
-    // FIX: Moved the function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
-    // Function to get filesViewModel
-    function getFilesViewModel() {
-        var filesViewModel = ko.dataFor(document.querySelector("#files_wrapper"));
-        if (!filesViewModel) {
-            console.log("filesViewModel not found.");
-            return null;
-        }
-        return filesViewModel;
-    }
-
-    // Moved function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
-    function getGcodeFiles() {
-        var filesViewModel = getFilesViewModel();
-        if (!filesViewModel) return [];
-
-        var fileList = filesViewModel.allItems();
-        if (!fileList || fileList.length === 0) {
-            console.log("No G-code files found.");
-            return [];
-        }
-        return fileList;
-    }
-
-
-    // Moved function outside of the `GcodeScannerViewModel` to avoid redefining it on every instance.
-    // Source https://github.com/ieatacid/OctoPrint-GcodeEditor/blob/master/octoprint_GcodeEditor/static/js/GcodeEditor.js
-    function getRootFilePath() {
-        var entry = self.File.listHelper.allItems[0];
-        if (entry && !entry.hasOwnProperty("parent")) {
-            var root = { children: {} };
-            // 🔹 FIX: Added `{}` to properly format the loop.
-            for (var index in self.files.listHelper.allItems) {
-                root.children[index] = self.files.listHelper.allItems[index];
-            }
-            return root;
-        }
-        while (entry && entry.hasOwnProperty("parent") && typeof entry["parent"] !== "undefined") {
-            entry = entry["parent"];
-        }
-        return entry;
-    }
-
-    // I removed this function from the `GcodeScannerViewModel` because it is not used right now.
-    // Source https://github.com/ieatacid/OctoPrint-GcodeEditor/blob/master/octoprint_GcodeEditor/static/js/GcodeEditor.js
-    function getGcodePathAndName(entry, gcodeUrl) {
-        if (entry && entry.hasOwnProperty("children")) {
-            for (var child in entry.children) {
-                var value = getGcodePathAndName(entry.children[child], gcodeUrl);
-                if (typeof value !== "undefined") {
-                    return value; // 🔹 FIX: Missing return statement inside `if`.
-                }
-            }
-        } else if (entry && entry.hasOwnProperty("name") && entry.refs && entry.refs.hasOwnProperty("download") && entry["refs"]["download"] === gcodeUrl) {
-            return (typeof self.files.currentPath !== "undefined" ? "/" : "") + 
-                (entry.hasOwnProperty("path") ? entry["path"] : entry["name"]);
-        }
+        // ✅ FIX: Listen for checkbox changes inside the ViewModel
+        $(".suspicious_cb").on("change", function () {
+            self.updateMaliciousCommands();
+        });
     }
 
     // Register the plugin with OctoPrint's view model system
@@ -311,6 +304,7 @@ $(function() {
     OCTOPRINT_VIEWMODELS.push({
         construct: GcodeScannerViewModel,
         dependencies: ["filesViewModel"], // OctoPrint's file manager ViewModel. It allows plugins to interact with the list of G-code files stored in OctoPrint.
-        elements: ["#gcode_scanner_tab"]  // The tab where the plugin's UI will be displayed
+        elements: ["#gcode_scanner_tab"],  // The tab where the plugin's UI will be displayed
+        name: "gcodeScannerViewModel" // The name of the ViewModel. This is used to register the ViewModel with OctoPrint.
     });
 });
