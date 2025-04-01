@@ -41,6 +41,7 @@ class ComponentOrderConfig(BaseModel):
     """Order of sidebar items."""
 
     tab: List[str] = [
+        "plugin_gcodescanner"
         "temperature",
         "control",
         "plugin_gcodeviewer",

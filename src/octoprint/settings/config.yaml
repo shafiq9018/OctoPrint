@@ -1,0 +1,126 @@
+appearance:
+  # Use this to give your printer a name. It will be displayed in the title bar
+  # (as "<Name> [OctoPrint]") and in the navigation bar (as "OctoPrint: <Name>")
+  name: My Printer
+
+  # Use this to color the navigation bar. Supported colors are red, orange,
+  # yellow, green, blue, violet and default.
+  color: default
+
+  # Makes the color of the navigation bar "transparent". In case your printer uses
+  # acrylic for its frame ;)
+  colorTransparent: false
+
+  # Show the internal filename in the files sidebar, if necessary
+  # UI change only
+  showInternalFilename: true
+
+  # Configures the order and availability of the UI components
+  components:
+
+    # Defines the order of the components within their respective containers.
+    #
+    # If overridden by the user the resulting order for display will be calculated as
+    # follows:
+    #
+    # - first all components as defined by the user
+    # - then all enabled core components as define in the default order (see below)
+    #
+    # Components not contained within the default order (e.g. from plugins) will be either
+    # prepended or appended to that result, depending on component type.
+    #
+    # Note that a component is not included in the order as defined by the user will still
+    # be put into the container, according to the default order. To fully disable a
+    # component, you'll need to add it to the container's disabled list further below.
+    order:
+
+      # order of navbar items
+      navbar:
+      - settings
+      - systemmenu
+      - plugin_announcements
+      - plugin_logging
+      - plugin_pi_support
+      - login
+
+      # order of sidebar items
+      sidebar:
+      - plugin_firmware_check
+      - connection
+      - state
+      - files
+
+      # order of tab items
+      tab:
+      - plugin_gcode_scanner
+      - temperature
+      - control
+      - plugin_gcodeviewer
+      - terminal
+      - timelapse
+
+      # order of settings, if settings plugins are registered gets extended internally by
+      # section_plugins and all settings plugins
+      settings:
+      - section_printer
+      - serial
+      - printerprofiles
+      - temperatures
+      - terminalfilters
+      - gcodescripts
+      - section_features
+      - features
+      - webcam
+      - accesscontrol
+      - plugin_gcodeviewer
+      - api
+      - plugin_appkeys
+      - section_octoprint
+      - folders
+      - appearance
+      - plugin_gcodescanner
+      - plugin_logging
+      - plugin_pluginmanager
+      - plugin_softwareupdate
+      - plugin_announcements
+      - plugin_backup
+      - plugin_tracking
+      - plugin_errortracking
+
+      # order of user settings
+      usersettings:
+      - access
+      - interface
+
+      # order of wizards
+      wizard:
+      - plugin_backup
+      - plugin_corewizard_acl
+
+      # order of about dialog entries
+      about:
+      - about
+      - plugin_pi_support
+      - supporters
+      - authors
+      - license
+      - thirdparty
+      - plugin_pluginmanager
+
+      # order of generic templates
+      generic: []
+
+    # Disabled components per container. If a component is included here it will not
+    # be included in OctoPrint's UI at all. Note that this might mean that critical
+    # functionality will not be available if no replacement is registered.
+    disabled:
+      navbar: []
+      sidebar: []
+      tab: []
+      settings: []
+      usersettings: []
+      generic: []
+
+  # Default language of OctoPrint. If left unset OctoPrint will try to match up available
+  # languages with the user's browser settings.
+  defaultLanguage: null

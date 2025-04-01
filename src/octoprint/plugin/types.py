@@ -1855,6 +1855,7 @@ class SettingsPlugin(OctoPrintPlugin):
         Return a ``dict`` with one of the following keys, mapping to a list of paths (as tuples or lists of
         the path elements) for which to restrict access via the REST API accordingly.
 
+        IMPORTANT: RAF
            * An :py:class:`~octoprint.access.permissions.OctoPrintPermission` instance: Paths will only be available on the REST API for users with the permission
            * ``admin``: Paths will only be available on the REST API for users with admin rights (any user with the SETTINGS permission)
            * ``user``: Paths will only be available on the REST API when accessed as a logged in user
