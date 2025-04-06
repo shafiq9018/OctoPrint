@@ -10,7 +10,7 @@ class GcodeScannerPlugin(
 ):
     def get_template_configs(self):
         return [
-            {"type": "tab", "custom_bindings": False, "name": "GC Scan", "template": "gcode_scanner_tab.jinja2"}
+            {"type": "tab", "custom_bindings": True, "name": "GC Scan", "template": "gcode_scanner_tab.jinja2"}
         ]
 
     def get_assets(self):

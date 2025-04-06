@@ -1,4 +1,25 @@
 $(function() {
+
+    console.log("↔️ Reordering tabs...");
+
+    function reorderTabs() {
+        // Tab header links
+        var myTabLink = $("#tab_plugin_octoprint_gcode_scanner_link");
+        var targetTabLink = $("#temp_link");
+    
+        if (myTabLink.length && targetTabLink.length) {
+            myTabLink.insertBefore(targetTabLink);
+        }
+    
+        // Tab content panes
+        var myTabPanel = $("#tab_plugin_octoprint_gcode_scanner");
+        var targetTabPanel = $("#temp");
+    
+        if (myTabPanel.length && targetTabPanel.length) {
+            myTabPanel.insertBefore(targetTabPanel);
+        }
+    }
+
     function GcodeScannerViewModel(parameters) {
         var self = this;
         self.filesViewModel = parameters[0];  // Get OctoPrint's file manager
@@ -311,6 +332,11 @@ $(function() {
     OCTOPRINT_VIEWMODELS.push({
         construct: GcodeScannerViewModel,
         dependencies: ["filesViewModel"], // OctoPrint's file manager ViewModel. It allows plugins to interact with the list of G-code files stored in OctoPrint.
-        elements: ["#gcode_scanner_tab"]  // The tab where the plugin's UI will be displayed
+        elements: ["#tab_plugin_octoprint_gcode_scanner"],  // The tab where the plugin's UI will be displayed
+        // Called when all view models are initialized
+        onAfterBinding: function() {
+            // Wait a short time to ensure DOM is fully ready
+            setTimeout(reorderTabs, 500);
+        }
     });
 });

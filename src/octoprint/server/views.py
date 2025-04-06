@@ -1013,7 +1013,6 @@ def fetch_template_data(refresh=False):
         ),
     }
 
-    # tabs TODO-RAF: Make sure to fix this part
 
     templates["tab"]["entries"] = {
         "g_code_scan": (
