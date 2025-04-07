@@ -2,11 +2,18 @@ import octoprint.plugin
 import flask
 import logging
 
+# Added for refreshing the filesystem
+from octoprint.events import Events
+
+
+
 class GcodeScannerPlugin(
-    octoprint.plugin.StartupPlugin,
-    octoprint.plugin.TemplatePlugin,
-    octoprint.plugin.AssetPlugin,
-    octoprint.plugin.SimpleApiPlugin
+    octoprint.plugin.StartupPlugin,         # Added for startup actions
+    octoprint.plugin.TemplatePlugin,        # Added for template rendering
+    octoprint.plugin.AssetPlugin,           # Added for asset management
+    octoprint.plugin.SimpleApiPlugin,       # Added for API handling
+    octoprint.plugin.EventHandlerPlugin,    # Added for event handling
+    octoprint.plugin.SettingsPlugin,        # Added for settings management
 ):
     def get_template_configs(self):
         return [
