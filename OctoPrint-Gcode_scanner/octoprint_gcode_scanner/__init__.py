@@ -5,8 +5,6 @@ import logging
 # Added for refreshing the filesystem
 from octoprint.events import Events
 
-
-
 class GcodeScannerPlugin(
     octoprint.plugin.StartupPlugin,         # Added for startup actions
     octoprint.plugin.TemplatePlugin,        # Added for template rendering
@@ -15,9 +13,16 @@ class GcodeScannerPlugin(
     octoprint.plugin.EventHandlerPlugin,    # Added for event handling
     octoprint.plugin.SettingsPlugin,        # Added for settings management
 ):
+    
     def get_template_configs(self):
         return [
-            {"type": "tab", "custom_bindings": False, "name": "GC Scan", "template": "gcode_scanner_tab.jinja2"}
+            {
+                "type": "tab",
+                "name": "Gcode Scanner",
+                "custom_bindings": True,
+                "template": "gcode_scanner_tab.jinja2",
+                "template_vars": {}
+            }
         ]
 
     def get_assets(self):
@@ -51,3 +56,5 @@ class GcodeScannerPlugin(
 __plugin_name__ = "Gcode Scanner"
 __plugin_pythoncompat__ = ">=3.7,<4"  # Ensures compatibility
 __plugin_implementation__ = GcodeScannerPlugin()
+# __plugin_js__ = ["static/js/gcode_scanner.js"]
+

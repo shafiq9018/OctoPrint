@@ -1,7 +1,7 @@
 <div id="gcode_scanner_tab">
 
 <!-- Application specified default G-code should appear on the left side -->
-<h2 class="scan-settings-title">GC Scan Settings </h2>
+<h2 class="scan-settings-title">G-Code Scan Settings </h2>
     <div class="row-fluid">
         <!-- Suspicious G-code -->
         <div class="span6">
@@ -42,6 +42,9 @@
                 <button class="btn btn-primary btn-block" data-bind="click: resetDefaults">{{ _('Reset Defaults') }}</button>
                 <button class="btn btn-primary btn-block" data-bind="click: clearSelections">{{ _('Clear All') }}</button>
             </p>
+            <p>
+                CAUTION: Remember to check all the codes. If you scan and print without checking the boxes, you may damage your printer without a full scan.
+            </p>
         </div>
 
         <!-- User Specified G-code should appear on the right side -->
@@ -52,14 +55,6 @@
                 <div id="user_commands">
                     <label><input type="checkbox"> M999  Example Causes unexpected resets</label>
                     <label><input type="checkbox"> M998  Example Triggers firmware reinitialization</label>
-                    <label><input type="checkbox"> M997  Example Conflicts with thermal settings</label>
-                    <label><input type="checkbox"> M996  Example Known to bypass safety checks</label>
-                    <label><input type="checkbox"> M995  Example Interferes with bed leveling</label>
-                    <label><input type="checkbox"> M994  Example Disrupts motion planning</label>
-                    <label><input type="checkbox"> M993  Example Temporarily disables endstops</label>
-                    <label><input type="checkbox"> M992  Example Engages silent mode (could mask issues)</label>
-                    <label><input type="checkbox"> M991  Example May trigger emergency shutdown</label>
-                    <label><input type="checkbox"> M990  Example Unknown effect, caution advised</label>
                 </div>
             </div>
             <p>
