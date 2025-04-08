@@ -366,63 +366,6 @@ $(function () {
             $("#scan_results").fadeIn(400); // Ensure the results section is visible
         };
 
-
-        // This function is called when a new file is uploaded to OctoPrint
-        self.autoScanNewFile = function (fileName) {
-            if (!fileName.toLowerCase().endsWith(".gcode")) return;
-            // log the file scan name to the console
-            console.log("🔍 Auto-scanning uploaded file:", fileName);
-
-            $("#gcode_file_select").val(fileName); // visually select it
-            const fileUrl = "/downloads/files/local/" + encodeURIComponent(fileName);
-
-            $.ajax({
-                url: fileUrl,
-                type: "GET",
-                dataType: "text",
-                success: function (data) {
-                    self.processGcode(data, fileName);
-                },
-                error: function (xhr) {
-                    console.error("❌ Failed to fetch uploaded G-code:", xhr.responseText);
-                }
-            });
-        };
-
-        ////////////////////////////////////////////////////////////////////////////////////
-        // Listen for any messages sent from the server to the client
-        // OctoPrint.socket.onMessage("*", function (message) {
-        //     // Log every message for debugging
-        //     console.log("🛰️ ANY message:", message);
-
-        //     // Check if this is an event message
-        //     if (message?.event === "event") {
-        //         console.log("Event data:", message.data);
-
-        //         // If the event type is "Upload", trigger the file scan
-        //         if (message.data?.type === "Upload") {
-        //             const fileName = message.data.payload?.name;
-
-        //             // Ensure the fileName is valid before proceeding
-        //             if (fileName) {
-        //                 console.log("Upload event detected:", fileName);
-
-        //                 // Call the function that triggers the file scan
-        //                 // Make sure `autoScanNewFile` is defined and accessible
-        //                 if (typeof autoScanNewFile === "function") {
-        //                     // DO SOMETHING HERE LIKE autoScanNewFile(fileName);
-        //                 } else {
-        //                     console.error("autoScanNewFile is not defined.");
-        //                 }
-        //             } else {
-        //                 console.warn("⚠️ Upload event detected but fileName is missing.");
-        //             }
-        //         }
-        //     }
-        // });
-        ////////////////////////////////////////////////////////////////////////////////////
-
-
         // Scan Gcode event button
         // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
         $("#scan_gcode_button").off("click").on("click", function() {
@@ -455,35 +398,6 @@ $(function () {
 });
 
 console.log("Global viewModel:", typeof viewModel);
-
-// Listen for when OctoPrint's viewModels are bound
-// I am in progress of testing this code. I am not sure if this is the right way to do it.
-// I had another idea to where just refresh the list every time the user clicks the dropdown.
-// I will test it further and see if it works. -Shafiq.
-$(document).on("octoprint.viewModelsBound", function () {
-    console.log("viewModelsBound — attaching WebSocket listeners");
-
-    // Upload detection: Upload → auto-scan
-    OctoPrint.socket.onMessage("*", function (message) {
-        if (message?.event === "event" && message?.data?.type === "Upload") {
-            const fileName = message.data.payload?.name;
-
-            console.log("📥 Upload event detected via WS:", fileName);
-
-            const vm = viewModel?.gcodeScannerViewModel;
-            if (vm && fileName) {
-                setTimeout(() => {
-                    vm.populateDropdown();
-                    vm.autoScanNewFile(fileName);
-                }, 1000);
-            }
-        }
-    });
-
-    // I will add any existing socket.onMessage("files") or others can below this line.
-    // This is where I will add the socket.onMessage("files") or others.
-});
-
 
 // ---
 // Community solution from jneilliii.
