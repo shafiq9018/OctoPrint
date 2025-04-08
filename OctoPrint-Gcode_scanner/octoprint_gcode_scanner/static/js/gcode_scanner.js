@@ -35,6 +35,23 @@ $(function () {
         // This will hold the user-added commands
         self.userDefinedCommands = new Set();  // Keep track of user-defined commands
 
+        let passedLogEntries = [];
+        let failedLogEntries = [];
+        
+        self.addPassedScans = function (now, fileName, extraNote = "") {
+            const box = $("#passed_logs");
+            const line = `[${now}] ✅ ${fileName}${extraNote ? " " + extraNote : ""}`;
+            const html = `<div>${line}</div>`;
+            box.append(html);
+        };
+        
+        self.addFailedScans = function (now, fileName, command, count, extraNote = "") {
+            const box = $("#failed_logs");
+            const line = `[${now}] ❌ ${fileName} ⚠️ Warning: ${command} found in ${count} lines.${extraNote ? " " + extraNote : ""}`;
+            const html = `<div>${line}</div>`;
+            box.append(html);
+        };
+        
 
         // This function is called when the plugin is loaded
         // This function is used to modify the list above. If the user unchecks and checks different 
@@ -112,9 +129,6 @@ $(function () {
             console.log("User-added commands removed cleanly.");
         };
         
-        
-
-
         // This function is called when the user checks or unchecks a checkbox
         // in the default list of suspicious commands
         $(".suspicious_cb").on("change", function () {
@@ -229,36 +243,36 @@ $(function () {
             //     .fadeIn();
             var detectedIssues = [];
             var gcodeLines = gcodeContent.split("\n");
-
+        
             gcodeLines.forEach((line, index) => {
                 var cleanLine = line.trim().split(";")[0].replace(/\\+$/, ""); // Remove trailing slashes
-
+        
                 self.maliciousCommands.forEach(command => {
                     // This complicated RegExp ensures we match the command at the start of the line
                     // and not as part of a longer command (e.g., "M1041" should not match "M104")
                     // -Shafiq
                     if (new RegExp(`^${command}(\\s|$)`).test(cleanLine.toUpperCase())) {
-
+        
                         // Ignore safe G92 E0 (normal extruder reset)
                         if (
                             command === "G92" &&
                             /^G92\s+E0\s*(;.*)?$/i.test(line.trim().replace(/\\+$/, ""))
                         ) {
                             return; // Ignore safe G92 E0 (even with comments or backslashes)
-                        }                        
-
+                        }
+        
                         // Ignore G28 if it only homes one axis (X, Y, or Z alone)
                         // TODO: Add more checks for G28 to ensure it's safe
                         // such as checking if it homes all axes with zero and nothing greater than zero
                         // Shafiq.
                         if (command === "G28") {
                             let params = cleanLine.replace("G28", "").trim().toUpperCase();
-
+        
                             // Good Ignore ALL `G28` before line 50
                             if (index < 50) {
                                 return;
                             }
-
+        
                             // Good Ignore safe moves (`G28 X0 Y0`)
                             // If the command is `G28` and it has a Z0 then it is a bad command.
                             // This case needs to be tested. I don't think that this line is enough
@@ -266,7 +280,7 @@ $(function () {
                             if (params.includes("X0") || params.includes("Y0")) {
                                 return;
                             }
-
+        
                             // Bad Only flag `G28 Z0` (possible nozzle crash)
                             // > line 50
                             if (params.includes("Z0")) {
@@ -275,10 +289,10 @@ $(function () {
                                 }
                             }
                         }
-
+        
                         let parts = cleanLine.split(" "); // Split command into parts
                         let value = parseFloat(parts[1]?.substring(1)); // Extract numerical value (e.g., M104 **S205**)
-
+        
                         // Apply safety checks for temperature-based commands
                         if (command === "M104" && value > 260) { // Extruder temp too high
                             detectedIssues.push(`⚠️ Warning: High extruder temp on Line ${index + 1}: ${line}`);
@@ -291,35 +305,53 @@ $(function () {
                     }
                 });
             });
-
-            // Ensure results are updated in the UI
+        
             // Ensure results are updated in the UI
             var resultList = $("#scan_results_list");
             resultList.empty(); // Clear previous results
-
+        
+            const now = new Date().toLocaleString();
+        
             if (detectedIssues.length === 0) {
                 console.log("✅ Scan Passed: No unsafe commands detected.");
-                resultList.append(
-                    '<li style="color: green; font-weight: bold;">✅ Scan Passed: No unsafe commands detected in <b>' + selectedFile + '</b>.</li>'
-                );
+                const msg = `✅ Scan Passed: No unsafe commands detected in <b>${selectedFile}</b>.`;
+                const logLine = `[${now}] ✅ ${selectedFile} and/or → CRC created @ upload.`;
+        
+                resultList.append(`<li style="color: green; font-weight: bold;">${msg}</li>`);
+                $("#passed_logs").append(`<div>${logLine}</div>`);
+        
+                // Optional scroll to bottom
+                const scrollEl = document.getElementById("passed_logs");
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
             } else {
                 console.log("⚠️ Scan Failed: Unsafe commands found.");
-                detectedIssues.forEach(issue => {
-                    resultList.append("<li>" + issue + "</li>");
-                });
+        
+                let match = detectedIssues[0]?.match(/⚠️ Warning: (\w+\d*)/);
+                let command = match ? match[1] : "Unknown";
+                let count = detectedIssues.length;
+                const logLine = `[${now}] ❌ ${selectedFile} ⚠️ Warning: ${command} found in ${count} lines. and/or → CRC chk failed @ print.`;
+        
+                $("#failed_logs").append(`<div>${logLine}</div>`);
+        
                 resultList.prepend(
                     '<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>'
                 );
+        
+                // Optional scroll to bottom
+                const scrollEl = document.getElementById("failed_logs");
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
             }
+        
             $("#scan_results").fadeIn(400); // Ensure the results section is visible
         };
-
+        
         
         // Add this outside scanGcode, just below self.scanGcode
         self.autoScanNewFile = function (fileName) {
             if (!fileName.toLowerCase().endsWith(".gcode")) return;
-
+            // log the file scan name to the console
             console.log("🔍 Auto-scanning uploaded file:", fileName);
+
             $("#gcode_file_select").val(fileName); // visually select it
             const fileUrl = "/downloads/files/local/" + encodeURIComponent(fileName);
 
