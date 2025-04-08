@@ -3,12 +3,12 @@ $(function () {
     console.log("GCODE SCANNER Plugin JS loaded");
 
     // This is basically a tool to listen for any messages sent from the server to the client.
-    // OctoPrint.socket.onMessage("*", function (message) {
-    //     console.log("🛰️ ANY message:", message);
-    //     if (message?.event === "event") {
-    //         console.log("🔬 Event data:", message.data);
-    //     }
-    // });
+    OctoPrint.socket.onMessage("*", function (message) {
+        console.log("🛰️ ANY message:", message);
+        if (message?.event === "event") {
+            console.log("🔬 Event data:", message.data);
+        }
+    });
 
 
     function GcodeScannerViewModel(parameters) {
@@ -398,6 +398,34 @@ $(function () {
 });
 
 console.log("Global viewModel:", typeof viewModel);
+
+// Listen for when OctoPrint's viewModels are bound
+// I am in progress of testing this code. I am not sure if this is the right way to do it.
+// I had another idea to where just refresh the list every time the user clicks the dropdown.
+// I will test it further and see if it works. -Shafiq.
+$(document).on("octoprint.viewModelsBound", function () {
+    console.log("viewModelsBound — attaching WebSocket listeners");
+
+    // Upload detection: Upload → auto-scan
+    OctoPrint.socket.onMessage("*", function (message) {
+        if (message?.event === "event" && message?.data?.type === "Upload") {
+            const fileName = message.data.payload?.name;
+
+            console.log("📥 Upload event detected via WS:", fileName);
+
+            const vm = viewModel?.gcodeScannerViewModel;
+            if (vm && fileName) {
+                setTimeout(() => {
+                    // Do something with the fileName
+                }, 1000);
+            }
+        }
+    });
+
+    // I will add any existing socket.onMessage("files") or others can below this line.
+    // This is where I will add the socket.onMessage("files") or others.
+});
+
 
 // ---
 // Community solution from jneilliii.
