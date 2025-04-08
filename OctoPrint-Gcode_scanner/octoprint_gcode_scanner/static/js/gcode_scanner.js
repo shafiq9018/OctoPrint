@@ -3,12 +3,12 @@ $(function () {
     console.log("GCODE SCANNER Plugin JS loaded");
 
     // This is basically a tool to listen for any messages sent from the server to the client.
-    OctoPrint.socket.onMessage("*", function (message) {
-        console.log("🛰️ ANY message:", message);
-        if (message?.event === "event") {
-            console.log("🔬 Event data:", message.data);
-        }
-    });
+    // OctoPrint.socket.onMessage("*", function (message) {
+    //     console.log("🛰️ ANY message:", message);
+    //     if (message?.event === "event") {
+    //         console.log("🔬 Event data:", message.data);
+    //     }
+    // });
 
 
     function GcodeScannerViewModel(parameters) {
@@ -37,21 +37,21 @@ $(function () {
 
         let passedLogEntries = [];
         let failedLogEntries = [];
-        
+
         self.addPassedScans = function (now, fileName, extraNote = "") {
             const box = $("#passed_logs");
             const line = `[${now}] ✅ ${fileName}${extraNote ? " " + extraNote : ""}`;
             const html = `<div>${line}</div>`;
             box.append(html);
         };
-        
+
         self.addFailedScans = function (now, fileName, command, count, extraNote = "") {
             const box = $("#failed_logs");
             const line = `[${now}] ❌ ${fileName} ⚠️ Warning: ${command} found in ${count} lines.${extraNote ? " " + extraNote : ""}`;
             const html = `<div>${line}</div>`;
             box.append(html);
         };
-        
+
 
         // This function is called when the plugin is loaded
         // This function is used to modify the list above. If the user unchecks and checks different 
@@ -128,7 +128,7 @@ $(function () {
             self.updateMaliciousCommands();
             console.log("User-added commands removed cleanly.");
         };
-        
+
         // This function is called when the user checks or unchecks a checkbox
         // in the default list of suspicious commands
         $(".suspicious_cb").on("change", function () {
@@ -172,12 +172,15 @@ $(function () {
             self.populateDropdown();
         });
 
+
+        
         // This function needs some work. It is using hardcoded paths.
         // Will the hardcoded path work on a Mac or Linux system?
         // We need to find a better way to get the file path.
         // Source: https://community.octoprint.org/t/uploading-file-to-octopi-through-the-api-using-javascript/3938
-        self.scanGcode = function () {
-            var selectedFile = $("#gcode_file_select").val();
+        self.scanGcode = function (filename) {
+            // var selectedFile = $("#gcode_file_select").val();
+            var selectedFile = filename || $("#gcode_file_select").val(); // Hanldle both cases -Shafiq.
 
             // Fade out old results smoothly before scanning new files and after selecting a file.
             $("#scan_results").fadeOut(300, function () { });
@@ -226,6 +229,8 @@ $(function () {
 
                     // Scan for malicious commands dynamically
                     self.processGcode(data, selectedFile); // Process the G-code content
+                    filename = null; // Reset filename to null after processing because we are done with it.
+
                 },
                 error: function (xhr) {
                     console.log("Failed to fetch G-code file: " + xhr.responseText);
@@ -233,119 +238,135 @@ $(function () {
             });
         };
 
-        self.processGcode = function (gcodeContent, selectedFile) {
-    console.log("Scanning G-code content...");
-    // I need to add message here saying SCAN RESULTS
-    // let newScanMessage = $("#scan_message");
-    // newScanMessage.text("SCAN RESULTS")
-    //     .css("color", "green")
-    //     .css("background-color", "lightgreen")
-    //     .fadeIn();
-    var detectedIssues = [];
-    var gcodeLines = gcodeContent.split("\n");
-
-    gcodeLines.forEach((line, index) => {
-        var cleanLine = line.trim().split(";")[0].replace(/\\+$/, ""); // Remove trailing slashes
-
-        self.maliciousCommands.forEach(command => {
-            // This complicated RegExp ensures we match the command at the start of the line
-            // and not as part of a longer command (e.g., "M1041" should not match "M104")
-            // -Shafiq
-            if (new RegExp(`^${command}(\\s|$)`).test(cleanLine.toUpperCase())) {
-
-                // Ignore safe G92 E0 (normal extruder reset)
-                if (
-                    command === "G92" &&
-                    /^G92\s+E0\s*(;.*)?$/i.test(line.trim().replace(/\\+$/, ""))
-                ) {
-                    return; // Ignore safe G92 E0 (even with comments or backslashes)
-                }
-
-                // Ignore G28 if it only homes one axis (X, Y, or Z alone)
-                // TODO: Add more checks for G28 to ensure it's safe
-                // such as checking if it homes all axes with zero and nothing greater than zero
-                // Shafiq.
-                if (command === "G28") {
-                    let params = cleanLine.replace("G28", "").trim().toUpperCase();
-
-                    // Good Ignore ALL `G28` before line 50
-                    if (index < 50) {
-                        return;
-                    }
-
-                    // Good Ignore safe moves (`G28 X0 Y0`)
-                    // If the command is `G28` and it has a Z0 then it is a bad command.
-                    // This case needs to be tested. I don't think that this line is enough
-                    // so we added the line below to check for Z0.
-                    if (params.includes("X0") || params.includes("Y0")) {
-                        return;
-                    }
-
-                    // Bad Only flag `G28 Z0` (possible nozzle crash)
-                    // > line 50
-                    if (params.includes("Z0")) {
-                        if (!detectedIssues.includes(`⚠️ Warning: Potential unsafe Z-homing on Line ${index + 1}`)) {
-                            detectedIssues.push(`⚠️ Warning: Potential unsafe Z-homing on Line ${index + 1}: ${line}`);
-                        }
-                    }
-                }
-
-                let parts = cleanLine.split(" "); // Split command into parts
-                let value = parseFloat(parts[1]?.substring(1)); // Extract numerical value (e.g., M104 **S205**)
-
-                // Apply safety checks for temperature-based commands
-                if (command === "M104" && value > 260) { // Extruder temp too high
-                    detectedIssues.push(`⚠️ Warning: High extruder temp on Line ${index + 1}: ${line}`);
-                } else if (command === "M140" && value > 110) { // Bed temp too high
-                    detectedIssues.push(`⚠️ Warning: High bed temp on Line ${index + 1}: ${line}`);
-                } else if (command !== "M104" && command !== "M140") {
-                    // Flag all other malicious commands (e.g., M30, M500)
-                    detectedIssues.push(`⚠️ Warning: ${command} found on Line ${index + 1}: ${line}`);
+        // This socket listener is used to detect when a file is uploaded to OctoPrint
+        // and then trigger the auto-scan function.
+        OctoPrint.socket.onMessage("*", function (message) {
+            if (message?.event === "event" && message.data?.type === "Upload") {
+                const fileName = message.data.payload?.name;
+                if (fileName) {
+                    console.log("Upload event detected:", fileName);
+                    self.populateDropdown(); // Refresh the dropdown to show the new file
+                    self.scanGcode(fileName); // Trigger the scan for the uploaded file
+                } else {
+                    console.warn("⚠️ Upload event detected but fileName is missing.");
                 }
             }
         });
-    });
-
-    // Ensure results are updated in the UI
-    var resultList = $("#scan_results_list");
-    resultList.empty(); // Clear previous results
-
-    const now = new Date().toLocaleString();
-
-    if (detectedIssues.length === 0) {
-        console.log("✅ Scan Passed: No unsafe commands detected.");
-        const msg = `✅ Scan Passed: No unsafe commands detected in <b>${selectedFile}</b>.`;
-        const logLine = `[${now}] ✅ ${selectedFile} and/or → CRC created @ upload.`;
-
-        resultList.append(`<li style="color: green; font-weight: bold;">${msg}</li>`);
-        $("#passed_logs").append(`<div>${logLine}</div>`);
-
-        // Optional scroll to bottom
-        const scrollEl = document.getElementById("passed_logs");
-        if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
-    } else {
-        console.log("⚠️ Scan Failed: Unsafe commands found.");
-
-        let match = detectedIssues[0]?.match(/⚠️ Warning: (\w+\d*)/);
-        let command = match ? match[1] : "Unknown";
-        let count = detectedIssues.length;
-        const logLine = `[${now}] ❌ ${selectedFile} ⚠️ Warning: ${command} found in ${count} lines. and/or → CRC chk failed @ print.`;
-
-        $("#failed_logs").append(`<div>${logLine}</div>`);
-
-        resultList.prepend(
-            '<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>'
-        );
-
-        // Optional scroll to bottom
-        const scrollEl = document.getElementById("failed_logs");
-        if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
-    }
-
-    $("#scan_results").fadeIn(400); // Ensure the results section is visible
-};
-
         
+
+        self.processGcode = function (gcodeContent, selectedFile) {
+            console.log("Scanning G-code content..." + selectedFile + " for malicious commands.");
+            // I need to add message here saying SCAN RESULTS
+            // let newScanMessage = $("#scan_message");
+            // newScanMessage.text("SCAN RESULTS")
+            //     .css("color", "green")
+            //     .css("background-color", "lightgreen")
+            //     .fadeIn();
+            var detectedIssues = [];
+            var gcodeLines = gcodeContent.split("\n");
+
+            gcodeLines.forEach((line, index) => {
+                var cleanLine = line.trim().split(";")[0].replace(/\\+$/, ""); // Remove trailing slashes
+
+                self.maliciousCommands.forEach(command => {
+                    // This complicated RegExp ensures we match the command at the start of the line
+                    // and not as part of a longer command (e.g., "M1041" should not match "M104")
+                    // -Shafiq
+                    if (new RegExp(`^${command}(\\s|$)`).test(cleanLine.toUpperCase())) {
+
+                        // Ignore safe G92 E0 (normal extruder reset)
+                        if (
+                            command === "G92" &&
+                            /^G92\s+E0\s*(;.*)?$/i.test(line.trim().replace(/\\+$/, ""))
+                        ) {
+                            return; // Ignore safe G92 E0 (even with comments or backslashes)
+                        }
+
+                        // Ignore G28 if it only homes one axis (X, Y, or Z alone)
+                        // TODO: Add more checks for G28 to ensure it's safe
+                        // such as checking if it homes all axes with zero and nothing greater than zero
+                        // Shafiq.
+                        if (command === "G28") {
+                            let params = cleanLine.replace("G28", "").trim().toUpperCase();
+
+                            // Good Ignore ALL `G28` before line 50
+                            if (index < 50) {
+                                return;
+                            }
+
+                            // Good Ignore safe moves (`G28 X0 Y0`)
+                            // If the command is `G28` and it has a Z0 then it is a bad command.
+                            // This case needs to be tested. I don't think that this line is enough
+                            // so we added the line below to check for Z0.
+                            if (params.includes("X0") || params.includes("Y0")) {
+                                return;
+                            }
+
+                            // Bad Only flag `G28 Z0` (possible nozzle crash)
+                            // > line 50
+                            if (params.includes("Z0")) {
+                                if (!detectedIssues.includes(`⚠️ Warning: Potential unsafe Z-homing on Line ${index + 1}`)) {
+                                    detectedIssues.push(`⚠️ Warning: Potential unsafe Z-homing on Line ${index + 1}: ${line}`);
+                                }
+                            }
+                        }
+
+                        let parts = cleanLine.split(" "); // Split command into parts
+                        let value = parseFloat(parts[1]?.substring(1)); // Extract numerical value (e.g., M104 **S205**)
+
+                        // Apply safety checks for temperature-based commands
+                        if (command === "M104" && value > 260) { // Extruder temp too high
+                            detectedIssues.push(`⚠️ Warning: High extruder temp on Line ${index + 1}: ${line}`);
+                        } else if (command === "M140" && value > 110) { // Bed temp too high
+                            detectedIssues.push(`⚠️ Warning: High bed temp on Line ${index + 1}: ${line}`);
+                        } else if (command !== "M104" && command !== "M140") {
+                            // Flag all other malicious commands (e.g., M30, M500)
+                            detectedIssues.push(`⚠️ Warning: ${command} found on Line ${index + 1}: ${line}`);
+                        }
+                    }
+                });
+            });
+
+            // Ensure results are updated in the UI
+            var resultList = $("#scan_results_list");
+            resultList.empty(); // Clear previous results
+
+            const now = new Date().toLocaleString();
+
+            if (detectedIssues.length === 0) {
+                console.log("✅ Scan Passed: No unsafe commands detected.");
+                const msg = `✅ Scan Passed: No unsafe commands detected in <b>${selectedFile}</b>.`;
+                const logLine = `[${now}] ✅ ${selectedFile} and/or → CRC created @ upload.`;
+
+                resultList.append(`<li style="color: green; font-weight: bold;">${msg}</li>`);
+                $("#passed_logs").append(`<div>${logLine}</div>`);
+
+                // Optional scroll to bottom
+                const scrollEl = document.getElementById("passed_logs");
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+            } else {
+                console.log("⚠️ Scan Failed: Unsafe commands found.");
+
+                let match = detectedIssues[0]?.match(/⚠️ Warning: (\w+\d*)/);
+                let command = match ? match[1] : "Unknown";
+                let count = detectedIssues.length;
+                const logLine = `[${now}] ❌ ${selectedFile} ⚠️ Warning: ${command} found in ${count} lines. and/or → CRC chk failed @ print.`;
+
+                $("#failed_logs").append(`<div>${logLine}</div>`);
+
+                resultList.prepend(
+                    '<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>'
+                );
+
+                // Optional scroll to bottom
+                const scrollEl = document.getElementById("failed_logs");
+                if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
+            }
+
+            $("#scan_results").fadeIn(400); // Ensure the results section is visible
+        };
+
+
         // This function is called when a new file is uploaded to OctoPrint
         self.autoScanNewFile = function (fileName) {
             if (!fileName.toLowerCase().endsWith(".gcode")) return;
@@ -368,8 +389,51 @@ $(function () {
             });
         };
 
+        ////////////////////////////////////////////////////////////////////////////////////
+        // Listen for any messages sent from the server to the client
+        // OctoPrint.socket.onMessage("*", function (message) {
+        //     // Log every message for debugging
+        //     console.log("🛰️ ANY message:", message);
+
+        //     // Check if this is an event message
+        //     if (message?.event === "event") {
+        //         console.log("Event data:", message.data);
+
+        //         // If the event type is "Upload", trigger the file scan
+        //         if (message.data?.type === "Upload") {
+        //             const fileName = message.data.payload?.name;
+
+        //             // Ensure the fileName is valid before proceeding
+        //             if (fileName) {
+        //                 console.log("Upload event detected:", fileName);
+
+        //                 // Call the function that triggers the file scan
+        //                 // Make sure `autoScanNewFile` is defined and accessible
+        //                 if (typeof autoScanNewFile === "function") {
+        //                     // DO SOMETHING HERE LIKE autoScanNewFile(fileName);
+        //                 } else {
+        //                     console.error("autoScanNewFile is not defined.");
+        //                 }
+        //             } else {
+        //                 console.warn("⚠️ Upload event detected but fileName is missing.");
+        //             }
+        //         }
+        //     }
+        // });
+        ////////////////////////////////////////////////////////////////////////////////////
+
+
         // Scan Gcode event button
-        $("#scan_gcode_button").off("click").on("click", self.scanGcode);
+        // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
+        $("#scan_gcode_button").off("click").on("click", function() {
+            // You can put multiple statements here
+            // For example:
+            console.log("Scan G-code button clicked");
+            filename = null; // This will reset the value of filename to null
+            self.scanGcode();  // Call the scan function
+            // Additional logic goes here, like resetting variables or handling other conditions
+        });
+        
 
         // ✅ FIX: Listen for checkbox changes inside the ViewModel
         $(".suspicious_cb").on("change", function () {
