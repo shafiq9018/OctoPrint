@@ -32,6 +32,10 @@ $(function () {
             "G92"   // Set position (can fake extrusion)
         ]);
 
+        // This will hold the user-added commands
+        self.userDefinedCommands = new Set();  // Keep track of user-defined commands
+
+
         // This function is called when the plugin is loaded
         // This function is used to modify the list above. If the user unchecks and checks different 
         // checkboxes, the list will be updated. And the scan will be based off the updated list.
@@ -73,8 +77,8 @@ $(function () {
         // in the user-defined commands section. It allows the user to add custom G-code commands.
         self.userAdd = function () {
             let cmd = prompt("Enter a G-code command (e.g., M999):").trim().toUpperCase();
-            if (!cmd || !/^M\d+$/.test(cmd)) {
-                alert("❌ Please enter a valid G-code (e.g., M999)");
+            if (!cmd || !/^[MG]\d+$/i.test(cmd)) {
+                alert("❌ Please enter a valid G-code (e.g., M104 or G92)");
                 return;
             }
             let desc = prompt("Enter a short description (optional):", "").trim();
@@ -83,6 +87,10 @@ $(function () {
                 alert("⚠️ This command is already listed.");
                 return;
             }
+
+            // Add the command to the user-defined commands list
+            self.userDefinedCommands.add(cmd);
+
             let labelHtml = `
                 <label>
                     <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> ${cmd}${desc ? " – " + desc : ""}
@@ -96,17 +104,14 @@ $(function () {
         // Clears all user-added commands from the list
         self.deleteCommands = function () {
             $("#user_commands").empty();
-        
-            // Just delete the user-added ones from maliciousCommands
-            self.userAddedCommands.forEach(cmd => {
+            self.userDefinedCommands.forEach(cmd => {
                 self.maliciousCommands.delete(cmd);
             });
-        
-            self.userAddedCommands.clear(); // Optional: reset the tracker
-        
+            self.userDefinedCommands.clear(); // Clear the tracker set
             self.updateMaliciousCommands();
             console.log("User-added commands removed cleanly.");
         };
+        
         
 
 
