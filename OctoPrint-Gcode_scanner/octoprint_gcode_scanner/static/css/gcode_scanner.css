@@ -46,7 +46,7 @@
 
 #suspicious_commands_scrollbox,
 #user_commands_scrollbox {
-    height: 198px;
+    height: 150px;
     overflow-y: auto;
     overflow-x: auto;
     white-space: nowrap;
@@ -58,7 +58,7 @@
 
 #passed_logs,
 #failed_logs {
-    height: 198px;
+    height: 150px;
     overflow-y: auto;
     overflow-x: auto;
     white-space: nowrap;
@@ -76,3 +76,24 @@
 #failed_logs {
     background-color: #fff5f5;
 }
+.scrollbox {
+    height: 1200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+    padding: 10px;
+    background-color: #f9f9f9;
+  }
+  
+  .log-box {
+    height: 200px;
+    overflow-y: auto;
+    border: 1px solid #aaa;
+    padding: 10px;
+    font-family: monospace;
+    background-color: #e8ffe8;
+  }
+  
+  .log-fail {
+    background-color: #ffe8e8;
+  }
+  

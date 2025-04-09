@@ -10,7 +10,6 @@ $(function () {
         }
     });
 
-
     function GcodeScannerViewModel(parameters) {
         var self = this;
         self.filesViewModel = parameters[0];  // Get OctoPrint's file manager
@@ -38,6 +37,48 @@ $(function () {
         let passedLogEntries = [];
         let failedLogEntries = [];
 
+        // This function is used to save user-defined commands to local storage
+        self.saveUserCommandsToCache = function () {
+            const allCommands = [];
+        
+            $("#user_commands input[type='checkbox']").each(function () {
+                let labelText = $(this).parent().text().trim(); // e.g., "M999 Causes resets"
+                let command = labelText.split(" ")[0].toUpperCase();
+                let desc = labelText.split(" ").slice(1).join(" ");
+                allCommands.push({ command, desc });
+            });
+        
+            localStorage.setItem("cached_user_gcode_cmds", JSON.stringify(allCommands));
+            console.log("Saved user commands to cache:", allCommands);
+        };
+        
+        self.loadCachedUserCommands = function () {
+            const cachedCommands = localStorage.getItem("cached_user_gcode_cmds");
+            if (cachedCommands) {
+                try {
+                    const list = JSON.parse(cachedCommands);
+                    list.forEach(entry => {
+                        if (!entry.command) return;
+        
+                        const cmd = entry.command.toUpperCase();
+                        const desc = entry.desc || "";
+                        self.userDefinedCommands.add(cmd);
+        
+                        const labelHtml = `
+                            <label>
+                                <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> "${cmd}" ${desc}
+                            </label>
+                        `;
+                        $("#user_commands").append(labelHtml);
+                    });
+        
+                    self.updateMaliciousCommands(); // Sync with scanner
+                } catch (err) {
+                    console.error("Error restoring cached G-code commands:", err);
+                }
+            }
+        };    
+
         self.addPassedScans = function (now, fileName, extraNote = "") {
             const box = $("#passed_logs");
             const line = `[${now}] ✅ ${fileName}${extraNote ? " " + extraNote : ""}`;
@@ -51,7 +92,6 @@ $(function () {
             const html = `<div>${line}</div>`;
             box.append(html);
         };
-
 
         // This function is called when the plugin is loaded
         // This function is used to modify the list above. If the user unchecks and checks different 
@@ -90,33 +130,63 @@ $(function () {
             console.log(" Reset suspicious G-code selections to default.");
         };
 
+        // Clear Logs button section
+
+        // Clears the passed scan logs
+        self.clearPassedLog = function () {
+            $("#passed_logs").empty();
+            console.log("Passed logs cleared.");
+        };
+
+        // Clears the failed scan logs
+        self.clearFailedLog = function () {
+            $("#failed_logs").empty();
+            console.log("Failed logs cleared.");
+        };
+
+
         // This function is called when the user clicks the "Add" button
         // in the user-defined commands section. It allows the user to add custom G-code commands.
         self.userAdd = function () {
             let cmd = prompt("Enter a G-code command (e.g., M999):").trim().toUpperCase();
             if (!cmd || !/^[MG]\d+$/i.test(cmd)) {
-                alert("❌ Please enter a valid G-code (e.g., M104 or G92)");
+                alert("⚠️ Please enter a valid G-code (e.g., M104 or G92)");
                 return;
             }
             let desc = prompt("Enter a short description (optional):", "").trim();
-            // Avoid duplicates
             if ($(`#user_commands input[value='${cmd}']`).length > 0) {
                 alert("⚠️ This command is already listed.");
                 return;
             }
 
-            // Add the command to the user-defined commands list
             self.userDefinedCommands.add(cmd);
 
             let labelHtml = `
                 <label>
-                    <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> ${cmd}${desc ? " – " + desc : ""}
+                    <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> "${cmd}"${desc ? " " + desc : ""}
                 </label>
             `;
             $("#user_commands").append(labelHtml);
             self.updateMaliciousCommands();
+
+            // Save to localStorage
+            const updatedList = [];
+            $("#user_commands label").each(function () {
+                const text = $(this).text().trim();
+                const parts = text.match(/^"([MG]\d+)"\s*(.*)$/);
+                if (parts) {
+                    updatedList.push({
+                        command: parts[1],
+                        desc: parts[2] || ""
+                    });
+                }
+            });
+            localStorage.setItem("cached_user_gcode_cmds", JSON.stringify(updatedList));
+            console.log("Saved to cache:", updatedList);
+
             console.log(`Added custom G-code: ${cmd}${desc ? " (" + desc + ")" : ""}`);
         };
+
 
         // Clears all user-added commands from the list
         self.deleteCommands = function () {
@@ -125,6 +195,8 @@ $(function () {
                 self.maliciousCommands.delete(cmd);
             });
             self.userDefinedCommands.clear(); // Clear the tracker set
+            localStorage.removeItem("cached_user_gcode_cmds"); // Clear the cache
+
             self.updateMaliciousCommands();
             console.log("User-added commands removed cleanly.");
         };
@@ -159,21 +231,50 @@ $(function () {
             });
 
             console.log("Dropdown updated successfully.");
+
         };
+
 
         // Ensure it runs when the page loads
         setTimeout(self.populateDropdown, 2000); // Give time for OctoPrint to load files
 
         // Populate dropdown on page load
-        self.populateDropdown();
+        self.populateDropdown();  // This should run once on load  
+
+        setTimeout(() => {
+            self.populateDropdown();   // fills the dropdown callnig twice to be safe.
+            self.scanAllFiles();       // Should wait and scan AFTER filesViewModel is ready.
+        }, 2000);
 
         // Refresh the dropdown every time it's clicked
         $("#gcode_file_select").on("mousedown", function () {
             self.populateDropdown();
         });
 
+        // This function is called when the page loads to scan all files
+        // This function is used to scan all files in the file manager if
+        // the user has selected the option to do so. We can add another
+        // for the user to select the files to scan. -Shafiq.
+        self.scanAllFiles = function () {
+            const fileList = self.filesViewModel.allItems();
 
-        
+            if (!fileList || fileList.length === 0) {
+                console.log("No G-code files found to scan.");
+                return;
+            }
+
+            fileList.forEach(file => {
+                if (file.name) {
+                    console.log("📂 Scanning on page load:", file.name);
+                    self.scanGcode(file.name);
+                }
+            });
+        };
+
+        self.populateDropdown(); // Populate the dropdown with files
+
+        self.loadCachedUserCommands(); // Load user-defined commands from cache
+
         // This function needs some work. It is using hardcoded paths.
         // Will the hardcoded path work on a Mac or Linux system?
         // We need to find a better way to get the file path.
@@ -252,7 +353,7 @@ $(function () {
                 }
             }
         });
-        
+
 
         self.processGcode = function (gcodeContent, selectedFile) {
             console.log("Scanning G-code content..." + selectedFile + " for malicious commands.");
@@ -368,7 +469,7 @@ $(function () {
 
         // Scan Gcode event button
         // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
-        $("#scan_gcode_button").off("click").on("click", function() {
+        $("#scan_gcode_button").off("click").on("click", function () {
             // You can put multiple statements here
             // For example:
             console.log("Scan G-code button clicked");
@@ -376,9 +477,21 @@ $(function () {
             self.scanGcode();  // Call the scan function
             // Additional logic goes here, like resetting variables or handling other conditions
         });
-        
 
-        // ✅ FIX: Listen for checkbox changes inside the ViewModel
+        // Clear Passed Logs Button (Green)
+        $("#clear_passed_log").off("click").on("click", function () {
+            $("#passed_logs").empty();
+            console.log("Cleared passed logs");
+        });
+
+        // Clear Failed Logs Button (Red)
+        $("#clear_failed_log").off("click").on("click", function () {
+            $("#failed_logs").empty();
+            console.log("Cleared failed logs");
+        });
+
+
+        // FIX: Listen for checkbox changes inside the ViewModel
         $(".suspicious_cb").on("change", function () {
             self.updateMaliciousCommands();
         });
@@ -396,6 +509,8 @@ $(function () {
         name: "gcodeScannerViewModel" // The name of the ViewModel. This is used to register the ViewModel with OctoPrint.
     });
 });
+// ---
+// End of GcodeScannerViewModel function ---
 
 console.log("Global viewModel:", typeof viewModel);
 
