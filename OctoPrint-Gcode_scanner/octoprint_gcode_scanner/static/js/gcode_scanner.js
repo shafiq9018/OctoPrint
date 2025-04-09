@@ -265,6 +265,8 @@ $(function () {
 
             fileList.forEach(file => {
                 if (file.name) {
+                    // If you think these icons 📂 are too much, you can remove them.
+                    // I have trouble seeing so I use them as code tags.
                     console.log("📂 Scanning on page load:", file.name);
                     self.scanGcode(file.name);
                 }
@@ -341,6 +343,7 @@ $(function () {
             });
         };
 
+        // ELLIE: CRC Checking before printing. 
         // This socket listener is used to detect when a file is uploaded to OctoPrint
         // and then trigger the auto-scan function.
         OctoPrint.socket.onMessage("*", function (message) {
@@ -348,6 +351,9 @@ $(function () {
                 const fileName = message.data.payload?.name;
                 if (fileName) {
                     console.log("Upload event detected:", fileName);
+                    // ELLIE: Trigger the CRC checksum creation here.
+                    // Example: self.createCRC(fileName); // This is a placeholder for the CRC creation function.
+                    // This is where we can add the CRC checksum creation code.
                     self.populateDropdown(); // Refresh the dropdown to show the new file
                     self.scanGcode(fileName); // Trigger the scan for the uploaded file
                 } else {
@@ -356,6 +362,21 @@ $(function () {
             }
         });
 
+        // ELLIE: CRC Checking before printing. 
+        // This socket listener is used to detect when a file is selected for printing
+        // Intercept file selection for printing
+        OctoPrint.socket.onMessage("*", function (message) {
+            if (message?.event === "FileSelected") {
+                const selectedFile = message?.data?.path;
+                console.log("File selected for printing:", selectedFile);
+                // Check if this file was flagged previously
+                const failedLogs = $("#failed_logs").text();
+                if (failedLogs.includes(selectedFile)) {
+                    // ELLIE: Alert CRC check failed or something else as required.
+                    alert("This file has failed the security scan.\n\nYou cannot print this. Please delete it and contact your supervisor.");
+                }
+            }
+        });
 
         self.processGcode = function (gcodeContent, selectedFile) {
             console.log("Scanning G-code content..." + selectedFile + " for malicious commands.");
