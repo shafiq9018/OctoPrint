@@ -40,18 +40,18 @@ $(function () {
         // This function is used to save user-defined commands to local storage
         self.saveUserCommandsToCache = function () {
             const allCommands = [];
-        
+
             $("#user_commands input[type='checkbox']").each(function () {
                 let labelText = $(this).parent().text().trim(); // e.g., "M999 Causes resets"
                 let command = labelText.split(" ")[0].toUpperCase();
                 let desc = labelText.split(" ").slice(1).join(" ");
                 allCommands.push({ command, desc });
             });
-        
+
             localStorage.setItem("cached_user_gcode_cmds", JSON.stringify(allCommands));
             console.log("Saved user commands to cache:", allCommands);
         };
-        
+
         self.loadCachedUserCommands = function () {
             const cachedCommands = localStorage.getItem("cached_user_gcode_cmds");
             if (cachedCommands) {
@@ -59,11 +59,11 @@ $(function () {
                     const list = JSON.parse(cachedCommands);
                     list.forEach(entry => {
                         if (!entry.command) return;
-        
+
                         const cmd = entry.command.toUpperCase();
                         const desc = entry.desc || "";
                         self.userDefinedCommands.add(cmd);
-        
+
                         const labelHtml = `
                             <label>
                                 <input type="checkbox" class="suspicious_cb" value="${cmd}" checked> "${cmd}" ${desc}
@@ -71,13 +71,13 @@ $(function () {
                         `;
                         $("#user_commands").append(labelHtml);
                     });
-        
+
                     self.updateMaliciousCommands(); // Sync with scanner
                 } catch (err) {
                     console.error("Error restoring cached G-code commands:", err);
                 }
             }
-        };    
+        };
 
         self.addPassedScans = function (now, fileName, extraNote = "") {
             const box = $("#passed_logs");
@@ -300,6 +300,8 @@ $(function () {
                 } else {
                     errorMessage.text("⚠️ Please select a G-code file first!").fadeIn();
                 }
+                // Clear old scan results too
+                $("#scan_results_list").empty().hide(); // Remove <li> results
 
                 return;
             }

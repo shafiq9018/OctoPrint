@@ -1,9 +1,9 @@
 <div id="gcode_scanner_tab">
 
 <!-- G-Code Security Settings Section (Collapsible) -->
-<h2 style="cursor: pointer;" onclick="toggleSection('section_security_settings', 'toggle-icon-1')">
+<h1 style="cursor: pointer;" onclick="toggleSection('section_security_settings', 'toggle-icon-1')">
     <span id="toggle-icon-1">▾</span> G-Code Security Settings
-</h2>
+</h1>
 <div id="section_security_settings" style="border: 2px solid black; padding: 10px; margin-bottom: 20px;">
     <!-- Application specified default G-code should appear on the left side -->
     <div class="row-fluid">
@@ -43,16 +43,16 @@
                 <button class="btn btn-primary btn-block" data-bind="click: deleteCommands">{{ _('Remove All Commands') }}</button>
             </p>
             <p>
-                Please Enter a valid G-code command to add it to the list. Between 0 and 1000. Follow the examples above. Feel free to clear the examples.
+                Please Enter a valid G-code command to add it to the list. Examples: M30 or G10 and then description.
             </p>
         </div>
     </div>
 </div>
 
 <!-- G-Code Scan Logs Section (Collapsible) -->
-<h2 style="cursor: pointer;" onclick="toggleSection('section_scan_logs', 'toggle-icon-2')">
+<h1 style="cursor: pointer;" onclick="toggleSection('section_scan_logs', 'toggle-icon-2')">
     <span id="toggle-icon-2">▾</span> G-Code Scan Logs
-</h2>
+</h1>
 <div id="section_scan_logs" style="border: 2px solid black; padding: 10px; margin-bottom: 20px;">
     <!-- These text boxes will log file results. -->
     <div class="row-fluid">
@@ -79,12 +79,12 @@
 </div>
 
 <!-- G-Code Scanner Section (Collapsible) -->
-<h2 style="cursor: pointer;" onclick="toggleSection('section_scanner', 'toggle-icon-3')">
-    <span id="toggle-icon-3">▾</span> Gcode Scanner
-</h2>
+<h1 style="cursor: pointer;" onclick="toggleSection('section_scanner', 'toggle-icon-3')">
+    <span id="toggle-icon-3">▾</span> Security Scan Tools
+</h1>
 <div id="section_scanner" style="border: 2px solid black; padding: 10px;">
     <!-- This message should be seen by the user so I added the css for this. Shafiq -->
-    <p class="message-text">Select a file to manually re-scan for user specified commands.</p>
+    <p class="message-text">Select an indivdual file to re-scan</p>
     <div id="gcode_controls" class="form-inline">
         <div class="form-group">
             <select id="gcode_file_select" class="form-control">
