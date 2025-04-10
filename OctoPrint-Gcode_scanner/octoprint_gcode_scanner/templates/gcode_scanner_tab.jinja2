@@ -1,109 +1,125 @@
 <div id="gcode_scanner_tab">
 
-<!-- Application specified default G-code should appear on the left side -->
-<h2 class="scan-settings-title">GC Scan Settings </h2>
+<!-- G-Code Security Settings Section (Collapsible) -->
+<h1 style="cursor: pointer;" onclick="toggleSection('section_security_settings', 'toggle-icon-1')">
+    <span id="toggle-icon-1">▾</span> G-Code Security Settings
+</h1>
+<div id="section_security_settings" style="border: 2px solid black; padding: 10px; margin-bottom: 20px;">
+    <!-- Application specified default G-code should appear on the left side -->
     <div class="row-fluid">
-        <!-- Suspicious G-code -->
+        <!-- Default Bad G-codes -->
         <div class="span6">
-            <h1>{{ _('Suspicious G-code') }}</h1>
-            <div id="suspicious_commands_scrollbox"
-                style="height: 198px; overflow-y: auto; overflow-x: auto; white-space: nowrap; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
+            <h1>{{ _('Default Risky G-codes') }}</h1>
+            <div id="suspicious_commands_scrollbox">
                 <p>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M30" checked> M30 // Delete file from SD card
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M112" checked> {{ _('"M112" Emergency stop') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M500" checked> {{ _('"M500" Save settings to EEPROM') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M303" checked> {{ _('"M303" PID autotune (can overheat components)') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M140" checked> {{ _('"M140" Set bed temperature') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M104" checked> {{ _('"M104" Set extruder temperature') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="M206" checked> {{ _('"M206" Offset Z-axis (could crash nozzle into bed)') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="G28" checked> {{ _('"G28" Home all axes (unexpected movements)') }}
-                    </label>
-                    <label class="checkbox">
-                        <input type="checkbox" class="suspicious_cb" value="G92" checked> {{ _('"G92" Set position (can fake extrusion)') }}
-                    </label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M30" checked> "M30" Delete file from SD card</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M112" checked> {{ _('"M112" Emergency stop') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M500" checked> {{ _('"M500" Save settings to EEPROM') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M303" checked> {{ _('"M303" PID autotune (can overheat components)') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M140" checked> {{ _('"M140" Set bed temperature') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M104" checked> {{ _('"M104" Set extruder temperature') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="M206" checked> {{ _('"M206" Offset Z-axis (could crash nozzle into bed)') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="G28" checked> {{ _('"G28" Home all axes (unexpected movements)') }}</label>
+                    <label class="checkbox"><input type="checkbox" class="suspicious_cb" value="G92" checked> {{ _('"G92" Set position (can fake extrusion)') }}</label>
                 </p>
             </div>
             <p>
                 <button class="btn btn-primary btn-block" data-bind="click: resetDefaults">{{ _('Reset Defaults') }}</button>
                 <button class="btn btn-primary btn-block" data-bind="click: clearSelections">{{ _('Clear All') }}</button>
             </p>
+            <p>
+                CAUTION: Remember to check all the codes. If you scan and print without checking the boxes, you may damage your printer without a full scan.
+            </p>
         </div>
 
         <!-- User Specified G-code should appear on the right side -->
         <div class="span6">
             <h1>{{ _('User Specified G-Code') }}</h1>
-            <div id="user_commands_scrollbox"
-                style="height: 198px; overflow-y: auto; overflow-x: auto; white-space: nowrap; border: 1px solid #ccc; padding: 10px; border-radius: 4px; margin-bottom: 10px;">
-                <div id="user_commands">
-                    <label><input type="checkbox"> M999  Example Causes unexpected resets</label>
-                    <label><input type="checkbox"> M998  Example Triggers firmware reinitialization</label>
-                    <label><input type="checkbox"> M997  Example Conflicts with thermal settings</label>
-                    <label><input type="checkbox"> M996  Example Known to bypass safety checks</label>
-                    <label><input type="checkbox"> M995  Example Interferes with bed leveling</label>
-                    <label><input type="checkbox"> M994  Example Disrupts motion planning</label>
-                    <label><input type="checkbox"> M993  Example Temporarily disables endstops</label>
-                    <label><input type="checkbox"> M992  Example Engages silent mode (could mask issues)</label>
-                    <label><input type="checkbox"> M991  Example May trigger emergency shutdown</label>
-                    <label><input type="checkbox"> M990  Example Unknown effect, caution advised</label>
-                </div>
+            <div id="user_commands_scrollbox">
+                <div id="user_commands"></div>
             </div>
             <p>
                 <button class="btn btn-primary btn-block" data-bind="click: userAdd">{{ _('Add Commands') }}</button>
                 <button class="btn btn-primary btn-block" data-bind="click: deleteCommands">{{ _('Remove All Commands') }}</button>
             </p>
             <p>
-                Please Enter a valid G-code command to add it to the list. Between 0 and 1000. Follow the examples above. Feel free to clear the examples.
+                Please Enter a valid G-code command to add it to the list. Examples: M30 or G10 and then description.
             </p>
-        </div>
-
-        <!-- File Selector & Scan Results -->
-        <div class="span12">
-            <h2>Gcode Scanner</h2>
-            <!-- This message should be seen by the user so I added the css for this. Shafiq -->
-            <p class="message-text">Select a file and scan for unsafe G-code commands.</p>
-            <div id="gcode_controls" class="form-inline" style="display: flex; align-items: flex-end; gap: 10px;">
-                <div class="form-group">
-                    <select id="gcode_file_select" class="form-control" style="width: auto;">
-                        <option value="">-- Choose a file --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button id="scan_gcode_button" class="btn btn-primary">Scan G-code</button>
-                </div>
-                <div class="form-group">
-                    <button id="unlock_printing_button" class="btn btn-primary">Unlock Printing</button>
-                </div>
-            </div>
-            <div id="scan_results" style="display: none;">
-                <h4 id="scan_results_title"></h4>
-                <ul id="scan_results_list"></ul>
-            </div>
         </div>
     </div>
 </div>
 
+<!-- G-Code Scan Logs Section (Collapsible) -->
+<h1 style="cursor: pointer;" onclick="toggleSection('section_scan_logs', 'toggle-icon-2')">
+    <span id="toggle-icon-2">▾</span> G-Code Scan Logs
+</h1>
+<div id="section_scan_logs" style="border: 2px solid black; padding: 10px; margin-bottom: 20px;">
+    <!-- These text boxes will log file results. -->
+    <div class="row-fluid">
+        <div class="span6">
+            <h1>Passed Scans</h1>
+            <div id="passed_logs" class="log-box"></div>
+        </div>
+        <div class="span6">
+            <h1>Failed Scans</h1>
+            <div id="failed_logs" class="log-box log-fail"></div>
+        </div>
+    </div>
 
+    <!-- These buttons will clear results. -->
+    <!-- I added them after burning midnight oil. -->
+    <div class="row-fluid">
+        <div class="span6">
+            <button class="btn btn-success btn-block" id="clear_passed_log">Clear Passed Log</button>
+        </div>
+        <div class="span6">
+            <button class="btn btn-danger btn-block" id="clear_failed_log">Clear Failed Log</button>
+        </div>
+    </div>
+</div>
 
+<!-- G-Code Scanner Section (Collapsible) -->
+<h1 style="cursor: pointer;" onclick="toggleSection('section_scanner', 'toggle-icon-3')">
+    <span id="toggle-icon-3">▾</span> Security Scan Tools
+</h1>
+<div id="section_scanner" style="border: 2px solid black; padding: 10px;">
+    <!-- This message should be seen by the user so I added the css for this. Shafiq -->
+    <p class="message-text">Select an indivdual file to re-scan</p>
+    <div id="gcode_controls" class="form-inline">
+        <div class="form-group">
+            <select id="gcode_file_select" class="form-control">
+                <option value="">-- Choose a file --</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button id="scan_gcode_button" class="btn btn-primary">Scan G-code</button>
+        </div>
+        <div class="form-group">
+            <!--  <button id="unlock_printing_button" class="btn btn-primary">Unlock Printing</button> -->
+        </div>
+    </div>
+    <div id="scan_results" style="display: none;">
+        <h4 id="scan_results_title"></h4>
+        <ul id="scan_results_list"></ul>
+    </div>
+</div>
+</div> <!-- End #gcode_scanner_tab -->
 
-{# CIS 4398: Gcode Scanner Tab Template Notes#}
+<!-- JavaScript for toggling collapsible sections -->
+<script>
+function toggleSection(sectionId, iconId) {
+    const section = document.getElementById(sectionId);
+    const icon = document.getElementById(iconId);
+    const isVisible = section.style.display !== "none";
+    section.style.display = isVisible ? "none" : "block";
+    icon.textContent = isVisible ? "▸" : "▾";
+}
+</script>
+
+{# CIS 4398: Gcode Scanner Tab Template Notes #}
 {#
     The template is a simple HTML structure with a header, a paragraph, a file selector, a button, and a list to display the scan results.
-    
+
     - `gcode_file_select`: A dropdown list that will contain the list of files available in the OctoPrint instance.
     - `scan_gcode_button`: A button that will trigger the scan process.
     - `scan_results`: A `<div>` that will contain the list of unsafe G-code commands found in the file.
