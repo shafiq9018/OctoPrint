@@ -343,9 +343,42 @@ $(function () {
             });
         };
 
-        // ELLIE: CRC Checking before printing. 
-        // This socket listener is used to detect when a file is uploaded to OctoPrint
-        // and then trigger the auto-scan function.
+
+        // This function is used to block printing of unsafe files.
+        // This is second attempt to see if this works. 
+        // Inside your plugin's JS file (after OctoPrint is loaded)
+        // $(function () {
+        //     // Example list of unsafe file names (you might retrieve this from plugin settings or metadata)
+        //     var unsafeFiles = ["malicious.gcode", "test_bad.gcode"];
+
+        //     OctoPrint.socket.onMessage("event", function (message) {
+        //         if (!message.event) return;  // not an event message
+        //         let eventType = message.event.type;
+        //         if (eventType === "FileSelected" || eventType === "PrintStarted") {
+        //             let fileName = message.event.payload.name;
+        //             let origin = message.event.payload.origin;
+        //             // Check if the selected file is flagged as unsafe
+        //             if (fileName && unsafeFiles.includes(fileName)) {
+        //                 console.warn("Blocking print for unsafe file:", fileName);
+        //                 // Cancel the print job before it proceeds
+        //                 OctoPrint.job.cancel();  // triggers a job cancel API call&#8203;:contentReference[oaicite:7]{index=7}
+        //                 // Show an alert to the user
+        //                 new PNotify({
+        //                     title: "Unsafe File – Print Blocked",
+        //                     text: "This file has been flagged as unsafe. Printing is blocked. Please delete the file and contact your supervisor.",
+        //                     type: "error",
+        //                     hide: false
+        //                 });
+        //             }
+        //         }
+        //     });
+        // });
+
+
+
+        // // ELLIE: CRC Checking before printing. 
+        // // This socket listener is used to detect when a file is uploaded to OctoPrint
+        // // and then trigger the auto-scan function.
         OctoPrint.socket.onMessage("*", function (message) {
             if (message?.event === "event" && message.data?.type === "Upload") {
                 const fileName = message.data.payload?.name;
@@ -362,6 +395,20 @@ $(function () {
             }
         });
 
+
+        OctoPrint.socket.onMessage("*", function (message) {
+            if (message?.event === "event" && message.data?.type === "PrintStarted") {
+                const fileName = message.data.payload?.name;
+                console.log("🖨️ PrintStarted event fired for:", fileName);
+        
+                // Example: Check failed logs and show a warning
+                const failedLogs = $("#failed_logs").text();
+                if (failedLogs.includes(fileName)) {
+                    alert("❌ This file failed the scan. Printing is blocked. Contact your supervisor.");
+                }
+            }
+        });
+        
         // ELLIE: CRC Checking before printing. 
         // This socket listener is used to detect when a file is selected for printing
         // Intercept file selection for printing
