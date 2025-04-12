@@ -363,7 +363,28 @@ $(function () {
             }
         });
 
-        
+        // OctoPrint.socket.onMessage("*", function (message) {
+        //     if (message?.event === "event" && message.data?.type === "FileSelected") {
+        //         const selectedFile = message.data.payload?.name;
+        //         console.log("📂 File selected:", selectedFile);
+        //         const failedLogs = $("#failed_logs").text();
+        //         if (failedLogs.includes(selectedFile)) {
+        //             alert("❌ This file is dangerous. The print will be canceled immediately.");
+        //             // ⏱ Cancel the job right after it begins
+        //             setTimeout(() => {
+        //                 OctoPrint.job.cancel()
+        //                     .done(() => {
+        //                         console.log("🛑 Emergency print cancel successful.");
+        //                     })
+        //                     .fail(() => {
+        //                         console.warn("⚠️ Failed to cancel the print job.");
+        //                     });
+        //             }, 500);
+        //         }
+        //     }
+        // });
+
+        // 📂 Intercept file selection for printing
         // ELLIE: CRC Checking before printing. 
         // This socket listener is used to detect when a file is selected for printing
         // Intercept file selection for printing
@@ -372,26 +393,42 @@ $(function () {
             if (message?.event === "event" && message.data?.type === "FileSelected") {
                 const selectedFile = message.data.payload?.name;
                 console.log("📂 File selected:", selectedFile);
-        
                 const failedLogs = $("#failed_logs").text();
                 if (failedLogs.includes(selectedFile)) {
-                    alert("❌ This file is dangerous. The print will be canceled immediately.");
-        
-                    // ⏱ Cancel the job right after it begins
+                    console.log("⏱ Waiting for OctoPrint popup...");
+                    // Wait a bit for popup to render
                     setTimeout(() => {
+                        const popup = document.querySelector(".ui-pnotify, .pnotify");
+                        const msg = popup?.querySelector(".ui-pnotify-text, .pnotify-text")?.textContent.trim();
+                        console.log("OctoPrint popup says:", msg);
+                        popup?.remove(); // ✂ Remove the original OctoPrint popup
+                        // Attempt to cancel the print job
                         OctoPrint.job.cancel()
-                            .done(() => {
-                                console.log("🛑 Emergency print cancel successful.");
-                            })
-                            .fail(() => {
-                                console.warn("⚠️ Failed to cancel the print job.");
-                            });
-                    }, 500);
+                            .done(() => console.log("🛑 Emergency print cancel successful."))
+                            .fail(() => console.warn("⚠️ Failed to cancel the print job."));
+                        // Attempt to disconnect the printer IMPORTANT THIS WORKS FOR ALL CASES.
+                        OctoPrint.connection.disconnect()
+                            .done(() => console.log("🔌 Disconnected printer due to malicious file."))
+                            .fail(() => console.warn("⚠️ Failed to disconnect printer."));
+                        // Clear the selection (prevents re-print)
+                        if (window.viewModel?.filesViewModel?.selected) {
+                            window.viewModel.filesViewModel.selected(null);
+                        }
+                        // Log it into failed logs instead of new popup
+                        const now = new Date().toLocaleString();
+                        $("#failed_logs").append(`<div>[${now}] ❌ ${selectedFile} — ${msg}</div>`);
+                        // // persistent popup
+                        // I took this out it was causing all kinds of problems.
+                        // new PNotify({
+                        //     title: "⚠️ Dangerous File Blocked",
+                        //     text: `Scan flagged this file. Print canceled.`,
+                        //     type: "error",
+                        //     hide: false
+                        // });
+                    }, 500); // Delay to wait for popup
                 }
             }
         });
-        
-        
 
         self.processGcode = function (gcodeContent, selectedFile) {
             console.log("Scanning G-code content..." + selectedFile + " for malicious commands.");
@@ -406,13 +443,11 @@ $(function () {
 
             gcodeLines.forEach((line, index) => {
                 var cleanLine = line.trim().split(";")[0].replace(/\\+$/, ""); // Remove trailing slashes
-
                 self.maliciousCommands.forEach(command => {
                     // This complicated RegExp ensures we match the command at the start of the line
                     // and not as part of a longer command (e.g., "M1041" should not match "M104")
                     // -Shafiq
                     if (new RegExp(`^${command}(\\s|$)`).test(cleanLine.toUpperCase())) {
-
                         // Ignore safe G92 E0 (normal extruder reset)
                         if (
                             command === "G92" &&
@@ -420,19 +455,16 @@ $(function () {
                         ) {
                             return; // Ignore safe G92 E0 (even with comments or backslashes)
                         }
-
                         // Ignore G28 if it only homes one axis (X, Y, or Z alone)
                         // TODO: Add more checks for G28 to ensure it's safe
                         // such as checking if it homes all axes with zero and nothing greater than zero
                         // Shafiq.
                         if (command === "G28") {
                             let params = cleanLine.replace("G28", "").trim().toUpperCase();
-
                             // Good Ignore ALL `G28` before line 50
                             if (index < 50) {
                                 return;
                             }
-
                             // Good Ignore safe moves (`G28 X0 Y0`)
                             // If the command is `G28` and it has a Z0 then it is a bad command.
                             // This case needs to be tested. I don't think that this line is enough
@@ -440,7 +472,6 @@ $(function () {
                             if (params.includes("X0") || params.includes("Y0")) {
                                 return;
                             }
-
                             // Bad Only flag `G28 Z0` (possible nozzle crash)
                             // > line 50
                             if (params.includes("Z0")) {
@@ -476,6 +507,14 @@ $(function () {
                 console.log("✅ Scan Passed: No unsafe commands detected.");
                 const msg = `✅ Scan Passed: No unsafe commands detected in <b>${selectedFile}</b>.`;
                 const logLine = `[${now}] ✅ ${selectedFile} and/or → CRC created @ upload.`;
+
+                // Remove any old failed line for a newly scanned file.
+                // If the same file is fixed an uploaded it will clear the old failed log line.
+                $("#failed_logs div").filter(function () {
+                    return $(this).text().includes(selectedFile);
+                }).remove();
+                // Remove file from blocked list
+                self.blockedFiles.delete(selectedFile);
 
                 resultList.append(`<li style="color: green; font-weight: bold;">${msg}</li>`);
                 $("#passed_logs").append(`<div>${logLine}</div>`);
@@ -533,6 +572,36 @@ $(function () {
         $(".suspicious_cb").on("change", function () {
             self.updateMaliciousCommands();
         });
+    }
+
+    // This function observes 👀 the dismissal of popups and executes a callback when the popup is dismissed.
+    // We are seeing OctoPrint popups in the console for some malicious out of bound files and our plugin
+    // is not able to cancel that print job. So we need to add this function to observe the popups.
+    // Once the popup is dismissed, we can cancel the print job.
+    function observePopupDismissal(callback) {
+        const target = document.body;
+        const observer = new MutationObserver(() => {
+            const popup = document.querySelector(".modal, .pnotify, .ui-pnotify");
+            if (!popup || getComputedStyle(popup).display === "none" || popup.offsetParent === null) {
+                console.log("✅ Popup dismissed (style-based check).");
+                observer.disconnect();
+                if (callback) callback();
+            }
+        });
+
+        observer.observe(target, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['style', 'class']
+        });
+
+        // Failsafe: if no popup is currently visible, call back immediately
+        const popup = document.querySelector(".modal, .pnotify, .ui-pnotify");
+        if (!popup || getComputedStyle(popup).display === "none" || popup.offsetParent === null) {
+            observer.disconnect();
+            if (callback) callback();
+        }
     }
 
     // Register the plugin with OctoPrint's view model system

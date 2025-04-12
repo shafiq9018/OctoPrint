@@ -1,7 +1,8 @@
 #gcode_file_select {
     width: 250px !important;
     min-width: 250px !important;
-    max-width: 100%; /* Prevents weird shrinking */
+    max-width: 100%;
+    /* Prevents weird shrinking */
 }
 
 #scan_gcode_button {
@@ -10,7 +11,8 @@
 
 .message-text {
     font-weight: normal;
-    font-size: 20px; /* adjustable for viewer liking */
+    font-size: 20px;
+    /* adjustable for viewer liking */
 }
 
 .scan-settings-title {
@@ -76,24 +78,32 @@
 #failed_logs {
     background-color: #fff5f5;
 }
+
 .scrollbox {
     height: 1200px;
     overflow-y: auto;
     border: 1px solid #ccc;
     padding: 10px;
     background-color: #f9f9f9;
-  }
-  
-  .log-box {
+}
+
+.log-box {
     height: 200px;
     overflow-y: auto;
     border: 1px solid #aaa;
     padding: 10px;
     font-family: monospace;
     background-color: #e8ffe8;
-  }
-  
-  .log-fail {
+}
+
+.log-fail {
     background-color: #ffe8e8;
-  }
-  
+}
+
+#section_scanner .btn {
+    width: 92px;    /* Makes button width adjust to its content */
+    height: 30px;          /* Prevent forced tall buttons */
+    /* padding: 8px 16px;    Adjusts the padding inside the buttons */
+    font-size: 10px;    /* Changes the font size for readability */
+    vertical-align: middle;
+}
