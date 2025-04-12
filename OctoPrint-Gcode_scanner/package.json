@@ -1,0 +1,19 @@
+{
+  "name": "octoprint-gcode_scanner",
+  "version": "1.0.0",
+  "description": "**TODO:** Describe what your plugin does.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "jest-environment-jsdom": "^29.7.0",
+    "jquery": "^3.7.1"
+  }
+}

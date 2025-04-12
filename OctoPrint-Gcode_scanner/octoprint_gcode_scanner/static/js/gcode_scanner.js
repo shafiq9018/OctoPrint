@@ -399,7 +399,10 @@ $(function () {
                     // Wait a bit for popup to render
                     setTimeout(() => {
                         const popup = document.querySelector(".ui-pnotify, .pnotify");
-                        const msg = popup?.querySelector(".ui-pnotify-text, .pnotify-text")?.textContent.trim();
+                        let msg = popup?.querySelector(".ui-pnotify-text, .pnotify-text")?.textContent?.trim();
+                        if (!msg) {
+                            msg = "⚠️ File flagged — no previous OctoPrint system popup detected. Disconnecting printer";
+                        }
                         console.log("OctoPrint popup says:", msg);
                         popup?.remove(); // ✂ Remove the original OctoPrint popup
                         // Attempt to cancel the print job
@@ -414,9 +417,9 @@ $(function () {
                         if (window.viewModel?.filesViewModel?.selected) {
                             window.viewModel.filesViewModel.selected(null);
                         }
-                        // Log it into failed logs instead of new popup
-                        const now = new Date().toLocaleString();
-                        $("#failed_logs").append(`<div>[${now}] ❌ ${selectedFile} — ${msg}</div>`);
+                        // Show a custom alert message
+                        alert(`❌ Dangerous file detected: ${selectedFile}\n\n${msg}`);
+
                         // // persistent popup
                         // I took this out it was causing all kinds of problems.
                         // new PNotify({
@@ -429,6 +432,7 @@ $(function () {
                 }
             }
         });
+        
 
         self.processGcode = function (gcodeContent, selectedFile) {
             console.log("Scanning G-code content..." + selectedFile + " for malicious commands.");
@@ -523,19 +527,20 @@ $(function () {
                 const scrollEl = document.getElementById("passed_logs");
                 if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
             } else {
+                // Move file previously passed but now failed, clean up old success entry
+                $("#passed_logs div").filter(function () {
+                    return $(this).text().includes(selectedFile);
+                }).remove();
                 console.log("⚠️ Scan Failed: Unsafe commands found.");
-
                 let match = detectedIssues[0]?.match(/⚠️ Warning: (\w+\d*)/);
                 let command = match ? match[1] : "Unknown";
                 let count = detectedIssues.length;
+                // This line below will be used to show the user the first line of the error.
                 const logLine = `[${now}] ❌ ${selectedFile} ⚠️ Warning: ${command} found in ${count} lines. and/or → CRC chk failed @ print.`;
-
                 $("#failed_logs").append(`<div>${logLine}</div>`);
-
                 resultList.prepend(
                     '<li style="color: red; font-weight: bold;">⚠️ Scan Failed: Unsafe commands found in <b>' + selectedFile + '</b>.</li>'
                 );
-
                 // Optional scroll to bottom
                 const scrollEl = document.getElementById("failed_logs");
                 if (scrollEl) scrollEl.scrollTop = scrollEl.scrollHeight;
