@@ -549,15 +549,32 @@ $(function () {
             $("#scan_results").fadeIn(400); // Ensure the results section is visible
         };
 
+        // ELLIE CRC check location
         // Scan Gcode event button
         // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
         $("#scan_gcode_button").off("click").on("click", function () {
-            // You can put multiple statements here
-            // For example:
+            // We will need to add a CRC check here.
             console.log("Scan G-code button clicked");
             filename = null; // This will reset the value of filename to null
             self.scanGcode();  // Call the scan function
             // Additional logic goes here, like resetting variables or handling other conditions
+        });
+
+        // Scan Gcode event button
+        // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
+        $("#rescan_all_button").off("click").on("click", function () {
+            // Mockup for the rescan all button
+            console.log("Scan rescan_all_button clicked");
+            alert(`🎆 COMING SOON 🎆\n\n💥 MAKE G-CODE GREAT AGAIN 💥`);
+
+        });
+
+                // Scan Gcode event button
+        // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
+        $("#override_safe_button").off("click").on("click", function () {
+            // Mockup for the override safe button
+            console.log("Scan override_safe_button clicked");
+            alert(`☢️ COMING SOON ☢️\n\n🔥  If it aint broke don't ptint it 🔥`);
         });
 
         // Clear Passed Logs Button (Green)
