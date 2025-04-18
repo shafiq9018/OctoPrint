@@ -574,7 +574,7 @@ $(function () {
         $("#override_safe_button").off("click").on("click", function () {
             // Mockup for the override safe button
             console.log("Scan override_safe_button clicked");
-            alert(`☢️ COMING SOON ☢️\n\n🔥  If it aint broke don't ptint it 🔥`);
+            alert(`☢️ COMING SOON ☢️\n\n🔥  If it aint broke don't print it 🔥`);
         });
 
         // Clear Passed Logs Button (Green)
