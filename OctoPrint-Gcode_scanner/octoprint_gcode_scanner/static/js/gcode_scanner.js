@@ -560,22 +560,38 @@ $(function () {
             // Additional logic goes here, like resetting variables or handling other conditions
         });
 
-        // Scan Gcode event button
-        // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
+        // rescan all button
         $("#rescan_all_button").off("click").on("click", function () {
-            // Mockup for the rescan all button
-            console.log("Scan rescan_all_button clicked");
-            alert(`🎆 COMING SOON 🎆\n\n💥 MAKE G-CODE GREAT AGAIN 💥`);
-
+            console.log("Rescanning all G-code files...");
+            // Clear both logs before rescanning
+            $("#passed_logs").empty();
+            $("#failed_logs").empty();
+            console.log("Cleared passed and failed logs before re-scanning.");
+            // Now scan all the files fresh
+            self.scanAllFiles();
         });
 
-                // Scan Gcode event button
-        // $("#scan_gcode_button").off("click").on("click", self.scanGcode); <-- This is the old code. I will keep it here for now.
+        // override safe button
         $("#override_safe_button").off("click").on("click", function () {
-            // Mockup for the override safe button
-            console.log("Scan override_safe_button clicked");
-            alert(`☢️ COMING SOON ☢️\n\n🔥  If it aint broke don't print it 🔥`);
+            console.log("Forcing file to safe list...");
+            const selectedFile = $("#gcode_file_select").val();
+            if (!selectedFile) {
+                alert("Please select a file first to override.");
+                return;
+            }
+            // Remove any failed logs for the file
+            $("#failed_logs div").filter(function () {
+                return $(this).text().includes(selectedFile);
+            }).remove();
+            // Add it to passed logs
+            const now = new Date().toLocaleString();
+            $("#passed_logs").append(`<div>[${now}] ${selectedFile} (forced safe)</div>`);
+            // Remove file from blocked set
+            self.blockedFiles.delete(selectedFile);
+            alert(`File "${selectedFile}" marked as safe.`);
+            console.log(`File "${selectedFile}" manually overridden to safe.`);
         });
+        
 
         // Clear Passed Logs Button (Green)
         $("#clear_passed_log").off("click").on("click", function () {

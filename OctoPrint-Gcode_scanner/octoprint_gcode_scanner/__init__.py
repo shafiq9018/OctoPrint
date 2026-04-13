@@ -13,12 +13,12 @@ class GcodeScannerPlugin(
     octoprint.plugin.EventHandlerPlugin,    # Added for event handling
     octoprint.plugin.SettingsPlugin,        # Added for settings management
 ):
-    
+
     def get_template_configs(self):
         return [
             {
                 "type": "tab",
-                "name": "Gcode Scanner",
+                "name": "Gcode Guardian",
                 "custom_bindings": True,
                 "template": "gcode_scanner_tab.jinja2",
                 "template_vars": {}
